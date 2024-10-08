@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combo Box with Filtering</title>
+    <style>
+        .combo-box-container {
+            display: flex;
+            align-items: center;
+            margin-left: 20%;
+
+            margin-top: 15px;
+        }
+
+        .combo-box {
+            position: relative;
+            width: 300px;
+            font-family: Arial, sans-serif;
+        }
+
+        .combo-box input {
+            width: 100%;
+            padding: 7px;
+            font-size: 28px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .combo-box ul {
+            font-size: 20px;
+            position: absolute;
+            left: 0;
+            right: 0;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            border: 1px solid #ccc;
+            background-color: #ddd;
+            opacity: .9;
+            max-height: 200px;
+            width: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .combo-box li {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .combo-box li.hidden {
+            display: none;
+        }
+
+        #resetButton {
+            height: 50px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+		  margin-left: 5px;
+            border-radius: 0px 0px 5px 5px;
+            rotate: -90deg;
+            cursor: pointer;
+            padding: 0 11px;
+        }
+
+        .icon {
+            font-size: 32px;
+            color: black;
+        }
+
+        #detailsBox { 
+		  margin-left: 20%;
+
+            margin-top: 16px;
+            font-size: 20px;
+            padding: 5px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 344px;
+            font-family: Arial, sans-serif;
+        }
+		h1 {
+		margin-left: 5%;
+
+		}
+        #detailsBox h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            border: .5px solid #ccc;
+            border-radius: 5px;
+            background-color: #e6ffe6;
+            padding: 5px 10px;
+        }
+
+        #detailsBox p {
+            margin: 0px;
+            padding: 5px 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        #noMatches {
+            color: red;
+            display: none;
+            position: absolute;
+        }
+    </style>
+</head>
+
+<body>
+    	<h1>States and Territories of United States</h1>
+	
+    	<div class="combo-box-container">
+        	<div class="combo-box">
+            	<input type="text" id="comboInput" placeholder="State or Territory ..." aria-expanded="false" aria-controls="comboList" aria-autocomplete="list">
+            	<ul id="comboList" role="listbox">
+                <!-- Options will be populated by JavaScript -->
+            	</ul>      
+          	<div id="noMatches">No matches found</div>
+			<!-- massage -->
+     	</div>
+        <button id="resetButton"><strong class="icon">&#8593;</strong></button>
+    </div>
+
+    <div id="detailsBox">
+        <h3>State Details</h3>
+        <p id="stateName">State: N/A</p>
+        <p id="population">Population: N/A</p>
+        <p id="capital">Capital: N/A</p>
+        <p id="governor">Governor: N/A</p>
+        <p id="zipCode">Zip Code: N/A</p>
+        <p id="type">Type: N/A</p>
+        <p id="date">Date: N/A</p>
+    </div>
+
+	<!-- alphabetical order states and territories -->
+	<script>
+	const options = [
+	/* state 22 */
+     { 	name: "Alabama",
+		population: "5,024,279", 
+     	capital: "Montgomery", 
+     	governor: "Kay Ivey", 
+     	zip: "35004", 
+     	type: "State 22", 
+     	date: "December 14, 1819",
+     	mapLocation: "" },	
+	/* state 49 */
+     { 	name: "Alaska", 
+      	population: "733,583", 
+      	capital: "Juneau", 
+        	governor: "Mike Dunleavy", 
+        	zip: "99501", 
+        	type: "State 49", 
+        	date: "January 3, 1959",
+        	mapLocation: "" },
+  	/* Territory */
+     { 	name: "American Samoa",
+      	population: "49710",
+      	capital: "Pago Pago",
+      	governor: "Lemanu Peleti",
+      	zip: "96799",
+        	type: "Commonwealth Territory",
+		date: "December 2, 1899",
+      	mapLocation: ""},
+	/* state 48 */
+     { 	name: "Arizona", 
+        	population: "7,359,197",
+        	capital: "Phoenix",
+        	gobernor: "Katie Hobbs",
+        	zip: "85001",
+        	type: "State 48",
+        	date: "February 14, 1912",
+        	mapLocation: ""},
+	/* state 25 */
+     { 	name: "Arkansas", 
+        	population: "3,045,637",
+        	capital: "",
+        	gobernor: "Sarah Huckabee",
+        	zip: "71601",
+        	type: "State 25",
+        	date: "June 15, 1836",
+        	mapLocation: ""},
+	/* state 31 */
+    	{ 	name: "California", 
+    		population: "39.538,223", 
+      	capital: "Sacramento", 
+      	governor: "Gavin Newsom", 
+      	zip: "90001", 
+        	type: "State 31",
+        	date: "September 9, 1850",
+      	mapLocation: "https://goo.gl/maps/yJTVQ3uDWTJ2"},
+	/* state 38 */
+     { 	name: "Colorado", 
+        	population: "5,773,714", 
+        	capital: "Denver",
+        	gobernor: "Jared Polis",
+        	zip: "80001",
+        	type: "State 38",
+        	date: "August 1, 1876",
+     	mapLocation: ""},
+	/* state 5 */
+     { 	name: "Connecticut", 
+        	population: "3,605,944", 
+        	capital: "Hartford",
+        	gobernor: "Ned Lamont",
+        	zip: "06001",
+        	type: "State 5",
+        	date: "January 9, 1788",
+      	mapLocation: ""},
+  	/* state 1 */
+     {	name: "Delaware", 
+        	population: "989,948",
+        	capital: "Dover",
+        	governor: "John C. Carney",
+        	zip: "19901",
+        	type: "State 1",
+        	date: "December 7, 1787",
+     	mapLocation: ""},
+	/* state 27 */
+     { 	name: "Florida", 
+        	population: "21,538,187", 
+        	capital: "Tallahassee",
+        	governor: "Ron DeSantis",
+        	zip: "32003", 
+        	type: "State 27",
+        	date: "March 3, 1845",
+      	mapLocation: ""},	
+	/* state 4 */
+     { 	name: "Georgia",
+      	population: "10,711,908",
+      	capital: "Atlanta",
+      	governor: "Briamn Kemp",
+      	zip: "30002",
+        	type: "State 4",
+		date: "January 2, 1788",
+      	mapLocation: ""},
+  	/* Territory */
+     { 	name: "Guam",
+      	population: "168485",
+      	capital: "Hagátña",
+      	governor: "Lou Leon",
+      	zip: "96910",
+        	type: "Territory",
+		date: "December 10, 1898",
+      	mapLocation: ""},
+	/* state 50 */
+     { 	name: "Hawaii",
+      	population: "1,455,271",
+      	capital: "Honolulu",
+      	governor: "Josh Green",
+      	zip: "96701",
+        	type: "State 50",
+		date: "August 21, 1959",
+      	mapLocation: ""},
+	/* state 43 */
+     { 	name: "Idaho",
+      	population: "1,839,105",
+      	capital: "Boise",
+      	governor: "Brad Little",
+      	zip: "83201",
+        	type: "State 43",
+		date: "July 3, 1890",
+      	mapLocation: ""},
+	/* state 21 */
+     { 	name: "Illinois",
+      	population: "12,812,508",
+      	capital: "Springfield",
+      	governor: "J.B. Pritzker",
+      	zip: "60001",
+        	type: "State 21",
+		date: "December 3, 1818",
+      	mapLocation: ""},
+	/* state 19 */
+     { 	name: "Indiana",
+      	population: "6,785,528",
+      	capital: "Indianapolis",
+      	governor: "Eric Holcomb",
+      	zip: "46001",
+        	type: "State 19",
+		date: "December 11, 1816",
+      	mapLocation: ""},
+	/* state 29 */
+     { 	name: "Iowa",
+      	population: "3,190,369",
+      	capital: "Des Moines",
+      	governor: "Kim Reynolds",
+      	zip: "50001",
+        	type: "State 29",
+		date: "December 28, 1846",
+      	mapLocation: ""},
+  	/* state 34 */
+     { 	name: "Kansas",
+      	population: "2,937,880",
+      	capital: "Topeka",
+      	governor: "Laura Kelly",
+      	zip: "66002",
+        	type: "State 34",
+		date: "January 29, 1861",
+      	mapLocation: ""},
+    	/* state 15 */
+     { 	name: "Kentucky",
+      	population: "4,505,836",
+      	capital: "Franckfort",
+      	governor: "Andy Beshear",
+      	zip: "40003",
+        	type: "State 15 / Commonwealth",
+		date: "June 1, 1792",
+      	mapLocation: ""},
+	/* state 18 */
+     { 	name: "Louisiana",
+      	population: "4,657,757",
+      	capital: "Baton Rouge",
+      	governor: "Jeff Landry",
+      	zip: "70001",
+        	type: "State 18",
+		date: "April 30, 1812",
+      	mapLocation: ""},	
+	/* state 23 */
+     { 	name: "Maine",
+      	population: "1,362,359",
+      	capital: "Augusta",
+      	governor: "Janet Mills",
+      	zip: "03901",
+        	type: "State 23",
+		date: "March 15, 1820",
+      	mapLocation: ""},
+	/* state 7 */
+     { 	name: "Maryland",
+      	population: "6,177,224",
+      	capital: "Annapolis",
+      	governor: "Wes Moore",
+      	zip: "20601",
+        	type: "State 7",
+		date: "April 28, 1788",
+      	mapLocation: ""},
+  	/* state 6 */
+     { 	name: "Massachusetts",
+      	population: "7,029,917",
+      	capital: "Boston",
+      	governor: "Maura Healey",
+      	zip: "01001",
+        	type: "State 6 / Commonwealth",
+		date: "February 6, 1788",
+      	mapLocation: ""},
+  	/* state 26 */
+     { 	name: "Michigan",
+      	population: "10,077,331",
+      	capital: "Lansing",
+      	governor: "Gretchen Whitmer",
+      	zip: "48001",
+        	type: "State 26",
+		date: "January 26, 1837",
+      	mapLocation: ""},
+	/* state 32 */
+     { 	name: "Minnesota",
+      	population: "5,706,494",
+      	capital: "St Paul",
+      	governor: "Tim Walz",
+      	zip: "55001",
+        	type: "State 32",
+		date: "May 11, 1858",
+      	mapLocation: ""},
+    	/* state 20 */
+     { 	name: "Mississippi",
+      	population: "2,961,279",
+      	capital: "Jackson",
+      	governor: "Tate Reeves",
+      	zip: "38601",
+        	type: "State 20",
+		date: "December 10, 1817",
+      	mapLocation: ""},
+	/* state 24 */
+     { 	name: "Missouri",
+      	population: "6,154,913",
+      	capital: "Jefferson City",
+      	governor: "Mike Parson",
+      	zip: "63001",
+        	type: "State 24",
+		date: "August 10, 1821",
+      	mapLocation: ""},
+	/* state 41 */
+     { 	name: "Montana",
+      	population: "1,084,225",
+      	capital: "Helena",
+      	governor: "Greg Gianforte",
+      	zip: "59001",
+        	type: "State 41",
+		date: "November 8, 1889",
+      	mapLocation: ""},
+	/* state 37 */
+     { 	name: "Nebraska",
+      	population: "1,961,504",
+      	capital: "Lincoln",
+      	governor: "Jim Pillen",
+      	zip: "68001",
+        	type: "State 37",
+		date: "March 1, 1867",
+      	mapLocation: ""},
+	/* state 36 */
+     { 	name: "Nevada",
+      	population: "3,104,614",
+      	capital: "Carson City",
+      	governor: "Joe Lombardo",
+      	zip: "88901",
+        	type: "State 36",
+		date: "October 31, 1864",
+      	mapLocation: ""},	
+	/* state 9 */
+     { 	name: "New Hampshire",
+      	population: "1,377,529",
+      	capital: "Concord",
+      	governor: "Chris Sununu",
+      	zip: "03031",
+        	type: "State 9",
+		date: "June 21, 1788",
+      	mapLocation: ""},	
+	/* state 3 */
+     { 	name: "New Jersey",
+      	population: "9,288,994",
+      	capital: "Trenton",
+      	governor: "Phill Murphy",
+      	zip: "07001",
+        	type: "State 3",
+		date: "December 18, 1787",
+      	mapLocation: ""},
+	/* state 47 */
+     { 	name: "New Mexico",
+      	population: "2,117,522",
+      	capital: "Santa Fe",
+      	governor: "Michelle Lujan",
+      	zip: "87001",
+        	type: "State 47",
+		date: "January 6, 1912",
+      	mapLocation: ""},
+	/* state 11 */
+     { 	name: "New York",
+      	population: "20,201,249",
+      	capital: "Albany",
+      	governor: "Kathy Hochul",
+      	zip: "10001",
+        	type: "State 11",
+		date: "July 26, 1788",
+      	mapLocation: "https://goo.gl/maps/H5heEYWZNDx"},
+  	/* state 12 */
+     { 	name: "North Carolina",
+      	population: "10,439,388",
+      	capital: "Releigh",
+      	governor: "Roy Cooper",
+      	zip: "27006",
+        	type: "State 12",
+		date: "November 21, 1789",
+      	mapLocation: ""},	
+	/* state 39 */
+     { 	name: "North Dakota",
+      	population: "779,094",
+      	capital: "Bismarck",
+      	governor: "Doug Burgum",
+      	zip: "58001",
+        	type: "State 39",
+		date: "November 2, 1889",
+      	mapLocation: ""},
+	/* Territory */
+     { 	name: "Northern Mariana Islands",
+      	population: "47,329",
+      	capital: "Saipán",
+      	governor: "Arnold Indalecio Palacios",
+      	zip: "96950",
+        	type: "Commonwealth Territory",
+		date: "January 9, 1978",
+      	mapLocation: ""},
+	/* state 17 */
+     { 	name: "Ohio",
+      	population: "11,799,448",
+      	capital: "Columbus",
+      	governor: "Mike DeWine",
+      	zip: "43001",
+        	type: "State ",
+		date: "March 1, 1803",
+      	mapLocation: ""},
+    	/* state 46 */
+     { 	name: "Oklahoma",
+      	population: "3,959,353",
+      	capital: "Oklahoma City",
+      	governor: "Kevin Stitt",
+      	zip: "73001",
+        	type: "State 46",
+		date: "November 16, 1907",
+      	mapLocation: ""},
+	/* state 33 */
+     { 	name: "Oregon",
+      	population: "4,237,256",
+      	capital: "Salem",
+      	governor: "Tina Kotek",
+      	zip: "97001",
+        	type: "State ",
+		date: "February 14, 1859",
+      	mapLocation: ""},
+    	/* state 2 */
+     { 	name: "Pennsylvania",
+      	population: "13,002,700",
+      	capital: "Harrisburg",
+      	governor: "Josh Shapiro",
+      	zip: "15001",
+        	type: "State 2 / Commonwealth",
+		date: "December 12, 1787",
+      	mapLocation: ""},
+  	/* territory / Commonwealth / posible state 51 */
+	{ 	name: "Puerto Rico",
+      	population: "3,285,874",
+      	capital: "San Juan",
+      	governor: "Pedro Pierluisi",      
+      	zip: "00601", 
+        	type: "Commonwealth (July 25, 1952)",
+        	date: "October 18, 1898",
+      	mapLocation: "https://goo.gl/maps/W4MFkqBGhXK2"},
+	/* state 13 */
+     { 	name: "Rhode Island",
+      	population: "1,097,379",
+      	capital: "Providence",
+      	governor: "Dan McKee",
+      	zip: "02801",
+        	type: "State 13",
+		date: "May 29, 1790",
+      	mapLocation: ""},
+  	/* state 8 */
+     { 	name: "South Carolina",
+      	population: "5,118,425",
+      	capital: "Columbia",
+      	governor: "Henry McMaster",
+      	zip: "29001",
+        	type: "State 8",
+		date: "May 23, 1788",
+      	mapLocation: ""},
+    /* state 40 */
+     { 	name: "South Dakota",
+      	population: "909,824",
+      	capital: "Pierre",
+      	governor: "Kristi Noem",
+      	zip: "57001",
+        	type: "State 40",
+		date: "November 2, 1889",
+      	mapLocation: ""},
+  	/* state 16 */
+     { 	name: "Tennessee",
+      	population: "6,910,840",
+      	capital: "Nashville",
+      	governor: "Bill Lee",
+      	zip: "37010",
+        	type: "State 16",
+		date: "June 1, 1796",
+      	mapLocation: ""},
+  	/* satate 28 */
+    	{ 	name: "Texas",
+      	population: "29,145,505",
+      	capital: "Austin",
+      	governor: "Greg Abbott", 
+      	zip: "73301",
+        	type: "state 28",
+        	date: "December 29, 1845",
+      	mapLocation: "https://goo.gl/maps/AQ3FNzdmM8D2"},
+  	/* Territory */
+     { 	name: "U.S. Virgin Islands",
+     	population: "87,146",
+      	capital: "Carlota Amalia, S. Thomas",
+      	governor: "Albert Bryan Jr.",
+      	zip: "00801",
+        	type: "Commonwealth Territory",
+		date: "March 31, 1917",
+      	mapLocation: ""},
+  	/* state 45 */
+     { 	name: "Utah",
+      	population: "3,271,616",
+      	capital: "Salt Lake City",
+      	governor: "Spencer Cox",
+      	zip: "84001",
+        	type: "State 45",
+		date: "January 4, 1896",
+      	mapLocation: ""},
+  	/* state 14 */
+     { 	name: "Vermont",
+      	population: "643,077",
+      	capital: "Montpelier",
+      	governor: "Phil Scott",
+      	zip: "05001",
+        	type: "State 14",
+		date: "March 4, 1791",
+      	mapLocation: ""},
+  	/* state 10 */
+     { 	name: "Virginia",
+      	population: "8,631,393",
+      	capital: "Richmond",
+      	governor: "Glenn Youngkin",
+      	zip: "20101",
+        	type: "State 10 / Commonwealth",
+		date: "June 25, 1788",
+      	mapLocation: ""},
+    	/* state 42 */
+     { 	name: "Washington",
+      	population: "7,705,281",
+      	capital: "Olympia",
+      	governor: "Jay Inslee",
+      	zip: "98001",
+        	type: "State 42",
+		date: "November 11, 1889",
+      	mapLocation: ""},      
+  	/* state 35 */
+     { 	name: "West Virginia",
+      	population: "1,793,716",
+      	capital: "Charleston",
+      	governor: "Jim Justice",
+      	zip: "24701",
+        	type: "State 35",
+		date: "June 20, 1863",
+      	mapLocation: ""},
+  	/* state 30 */
+     { 	name: "Wisconsin",
+      	population: "5,893,718",
+      	capital: "Madison",
+      	governor: "Tony Evers",
+      	zip: "53001",
+        	type: "State 30",
+		date: "May 29, 1848",
+      	mapLocation: ""},
+    	/* state 44 */
+     { 	name: "Wyoming",
+      	population: "576,851",
+      	capital: "Cheyenne",
+      	governor: "Mark Gordon",
+      	zip: "82001",
+        	type: "State 44",
+		date: "July 10, 1890",
+      	mapLocation: ""},
+
+    	// Add more states and territories as needed
+  	];
+	</script>
+
+    <script>
+        const comboInput = document.getElementById('comboInput');
+        const comboList = document.getElementById('comboList');
+        const noMatches = document.getElementById('noMatches');
+        const detailsBox = document.getElementById('detailsBox');
+
+        function populateList() {
+            comboList.innerHTML = '';
+            options.forEach(option => {
+                const li = document.createElement('li');
+                li.textContent = option.name;
+                li.addEventListener('click', () => {
+                    comboInput.value = option.name;
+                    comboList.style.display = 'none';
+                    displayDetails(option);
+                });
+                comboList.appendChild(li);
+            });
+        }
+
+        function displayDetails(option) {
+            document.getElementById('stateName').textContent = `State: ${option.name}`;
+            document.getElementById('population').textContent = `Population: ${option.population}`;
+            document.getElementById('capital').textContent = `Capital: ${option.capital}`;
+            document.getElementById('governor').textContent = `Governor: ${option.governor}`;
+            document.getElementById('zipCode').textContent = `Zip Code: ${option.zip}`;
+            document.getElementById('type').textContent = `Type: ${option.type}`;
+            document.getElementById('date').textContent = `Date: ${option.date}`;
+        }
+
+        comboInput.addEventListener('click', () => {
+            comboList.style.display = 'block';
+        });
+
+        comboInput.addEventListener('input', () => {
+            const filter = comboInput.value.toLowerCase();
+            const items = comboList.querySelectorAll('li');
+            let hasMatch = false;
+
+            items.forEach(item => {
+                if (item.textContent.toLowerCase().includes(filter)) {
+                    item.style.display = '';
+                    hasMatch = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (!hasMatch) {
+                noMatches.style.display = 'block';
+                comboList.style.display = 'none';
+            } else {
+                noMatches.style.display = 'none';
+                comboList.style.display = 'block';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!comboInput.contains(e.target) && !comboList.contains(e.target)) {
+                comboList.style.display = 'none';
+            }
+        });
+
+        document.getElementById('resetButton').addEventListener('click', () => {
+            comboInput.value = '';
+            noMatches.style.display = 'none';
+            populateList();
+            comboList.style.display = 'none';
+        });
+
+        populateList();
+    </script>
+</body>
+
+</html>
+
+
