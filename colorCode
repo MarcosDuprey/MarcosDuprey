@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrical Panel Circuit Identifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Styling for general layout, buttons, input fields, etc. */
+        
+				body { height: auto; padding: 0; margin: 0; font-family: Arial,  sans-serif; }
+        
+				* { padding: 0; margin: auto; box-sizing: border-box; }
+        
+				.sticky-container { position: sticky; top: 0; padding: 10px; height: 240px; 
+				
+				background-image: conic-gradient(at -25% 25%, red 10%, yellow 30%, #1e90ff 50%);
+    z-index: 2; }
+		
+				#circuit-color { height: 40px; width: 40px; padding: 50px; border-radius: 50%; border: 10px solid black; display: flex; justify-content: center; align-items: center; font-size: 52px; color: black; background-color: white; }
+        #searchInput { width: 200px; border-radius: 5px; padding: 5px 45px 5px 45px; font-size: 28px; border: 1px solid lime; outline: none; caret-color: black; }
+        #searchInput:focus { box-shadow: 0 0 10px rgba(0, 128, 0, 0.6); border-color: #00a000; }
+        .error-message { color: red; font-size: 14px; padding: 5px; }
+        .voice-btn, .reset-btn, .clear-btn { background: none; cursor: pointer; color: #555; font-size: 28px; border: none; }
+        table { width: 100%; border-collapse: collapse; font-size: 24px; }
+        th, td { border: 1px solid black; padding: 10px; }
+        th { background-color: #000; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="content">
+    <!-- Header and language selection -->
+    <div class="sticky-container">
+        <div id="circuit-color">0</div>
+        <h1>USA Circuit Color</h1>
+
+        <div class="search-container">
+            <button class="voice-btn" id="voice-search-btn" title="Voice Search" aria-label="Voice Search"><i class="fa fa-microphone"></i></button>
+           
+            <input type="number" id="searchInput" placeholder="Search..." aria label="Search by number">
+            <button class="reset-btn" id="reset" title="Reset">✖</button>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+				
+				<!--
+				 <select id="languageSelect" aria-label="Select language">
+                <option value="en-US">English (US)</option>
+                <option value="es-ES">Spanish (Spain)</option>
+                <option value="fr-FR">French (France)</option>
+                <option value="de-DE">German (Germany)</option>
+                <!-- Add more languages as needed 
+            </select>
+				-->
+    </div>
+
+    <!-- Data table -->
+    <table id="dataTable">
+        <thead>
+            <tr><th scope="col">Circuit</th><th scope="col">LINE</th><th scope="col">Circuit</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<script>
+    // ====== Cached DOM Elements ======
+    const tableBody = document.getElementById('tableBody');
+    const searchInput = document.getElementById("searchInput");
+    const circuitColorDiv = document.getElementById("circuit-color");
+    const errorMessage = document.getElementById("error-message");
+    const voiceSearchBtn = document.getElementById('voice-search-btn');
+    const languageSelect = document.getElementById('languageSelect');
+    const rowMap = new Map();
+
+    // ====== Initialization ======
+    window.onload = initialize;
+
+    function initialize() {
+        generateTable();            // Build the data table
+        setupEventListeners();      // Set up input, button, and click event listeners
+        initializeSpeechRecognition(); // Initialize speech recognition with language selection
+    }
+
+    // ====== Table Generation ======
+    function generateTable() {
+        const fragment = document.createDocumentFragment();
+        for (let i = 1; i <= 999; i += 2) {
+            const tr = document.createElement('tr');
+            const { trColor, textColor, lineText } = getRowStyle(i);
+
+            tr.style.backgroundColor = trColor;
+            tr.style.color = textColor;
+            tr.innerHTML = `<td>${i}</td><td>${lineText}</td><td>${i + 1}</td>`;
+            fragment.appendChild(tr);
+
+            rowMap.set(i, { element: tr, color: trColor });
+            rowMap.set(i + 1, { element: tr, color: trColor });
+        }
+        tableBody.appendChild(fragment);
+    }
+
+    // Determines row color and text based on the index
+    function getRowStyle(index) {
+        const rowIndex = Math.floor(index / 2) % 3;
+        const colors = [
+            { trColor: 'sienna', textColor: 'white', lineText: 'L1' },
+            { trColor: 'orange', textColor: '#000', lineText: 'L2' },
+            { trColor: 'yellow', textColor: '#000', lineText: 'L3' }
+        ];
+        return colors[rowIndex];
+    }
+
+    // ====== Event Handling ======
+    function setupEventListeners() {
+        searchInput.addEventListener('input', debounce(searchTable, 700));
+        document.getElementById("reset").addEventListener("click", resetBtn);
+
+        tableBody.addEventListener("click", (event) => {
+            if (event.target.tagName === "TD") {
+                const clickedNumber = parseInt(event.target.innerText);
+                if (!isNaN(clickedNumber)) {
+                    searchInput.value = clickedNumber;
+                    searchTable();
+                }
+            }
+        });
+    }
+
+    // ====== Speech Recognition ======
+    function initializeSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.log("Speech recognition not supported in this browser.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.interimResults = false;
+
+        let isRecognitionRunning = false;
+
+        languageSelect.addEventListener('change', () => {
+            recognition.lang = languageSelect.value;
+        });
+
+        const debouncedStartRecognition = debounce(() => {
+            if (!isRecognitionRunning) {
+                recognition.lang = languageSelect.value;
+                recognition.start();
+                isRecognitionRunning = true;
+            }
+        }, 1000);
+
+        voiceSearchBtn.addEventListener('click', debouncedStartRecognition);
+
+        recognition.addEventListener('result', (event) => {
+            searchInput.value = event.results[0][0].transcript;
+            searchTable();
+        });
+
+        recognition.addEventListener('end', () => {
+            isRecognitionRunning = false;
+        });
+    }
+
+    // ====== Core Functions ======
+    function searchTable() {
+        const number = parseInt(searchInput.value);
+        if (isNaN(number) || number < 1 || number > 999) {
+            errorMessage.innerText = "Please enter a number between 1 and 999.";
+            return;
+        }
+
+        const rowData = rowMap.get(number);
+        if (rowData) {
+            circuitColorDiv.innerText = number;
+            circuitColorDiv.style.backgroundColor = rowData.color;
+            smoothScrollTo(rowData.element);
+            errorMessage.innerText = "";
+        } else {
+            errorMessage.innerText = "Number not found in the table.";
+        }
+    }
+
+    function resetBtn() {
+        circuitColorDiv.innerText = '0';
+        circuitColorDiv.style.backgroundColor = 'white';
+        searchInput.value = "";
+        errorMessage.innerText = "";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ====== Utility Functions ======
+    function debounce(func, delay) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+
+    function smoothScrollTo(element) {
+        window.requestAnimationFrame(() => {
+            window.scrollTo({
+                top: element.offsetTop - 50,
+                behavior: 'smooth'
+            });
+        });
+    }
+</script>
+</body>
+</html>
