@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrical Dwelling Load Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px; text-align: center;
+            background-color: #282c34;
+            color: white;
+        }
+        section {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #3b3f45;
+            border-radius: 10px;
+            border: 1px solid #61dafb;
+            transition: opacity 0.3s;
+        }
+        .section.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+						border-bottom: 1px solid #61dafb;
+        }
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+						margin-bottom: 10px;
+        }
+        input[type="number"], select {
+            //width: 100px;
+            padding: 3px;
+            font-size: 14px;
+						margin-left: 10px;
+            border-radius: 5px;
+            border: 1px solid #61dafb;
+            background-color: #444;
+            color: white;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #61dafb;
+            border: none;
+            border-radius: 5px;
+            color: black;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3b3f45;
+            color: #61dafb;
+        }
+ 
+				small {
+            display: block;
+            margin-top: 5px;
+            color: red;
+        }
+        #step12 header {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFD700; /* Gold for emphasis */
+        }
+        #step12 .input-row {
+            font-size: 18px;
+        }
+				
+				#reset-step1 {
+    			position: absolute;
+    			right: 50px;
+    			top: 50%;
+    			transform: translateY(-50%);
+    			background: none;
+    			border: none;
+    			color: red;
+    			font-size: 18px;
+    			cursor: pointer;
+				}
+
+		    </style>
+</head>
+<body>
+
+<h1>Electrical Dwelling Load Calculator</h1>
+<h2>(100A - 400A)</h2>
+<br>
+
+<!-- Step 1: General Lighting and Receptacles -->
+
+<section id="step1">
+    <header>
+        <h3>Step 1: General Lighting and Receptacles</h3>
+        <p>Art. 220.12</p>
+    </header>
+    <div class="input-row">
+    <label for="sq-ft">Square Footage</label>
+    <div style="position: relative; display: inline-block;">
+        <input type="number" id="sq-ft" placeholder="Enter Sq Ft" aria-describedby="sq-ft-error" min="0" style="padding-right: 30px;">
+        <button id="reset-step1" onclick="resetForm()" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; color: red; font-size: 18px; cursor: pointer;">
+            &times;</button>
+    </div>
+</div>
+<div class="input-row">
+    <p>Lighting Load:</p>
+    <span id="lighting-load">0 VA</span>
+</div>
+<div class="input-row">
+    <p>Receptacle Circuits:</p>
+    <span id="receptacle-circuits">0</span> <!-- Blank by default -->
+</div>
+</section>
+
+<!-- Step 2: Small Appliances -->
+<section id="step2">
+    <header>
+        <h3>Step 2: Small Appliances</h3>
+        <p>Art. 220.52A</p>
+    </header>
+    <div class="input-row">
+        <label for="small-appliances">Number of Small Appliances</label>
+        <select id="small-appliances">
+            	<option value="2">2</option>
+            	<option value="3">3</option>
+            	<option value="4">4</option>
+							<option value="5">5</option>
+        </select>
+    </div>
+    <div class="input-row">
+        <p>Total Small Appliance Load:</p>
+        <span id="small-appliances-load">0 VA</span>
+    </div>
+</section>
+
+<!-- Step 3: Laundry -->
+<section id="step3">
+    <header>
+        <h3>Step 3: Laundry</h3>
+        <p>Art. 220.52B</p>
+    </header>
+    <div class="input-row">
+        <label for="laundry">Number of Laundry Circuits</label>
+        <select id="laundry">
+           	<option value="1">1</option>
+           	<option value="2">2</option>
+						<option value="3">3</option>
+        </select>
+    </div>
+    <div class="input-row">
+        <p>Total Laundry Load:</p>
+        <span id="laundry-load">0 VA</span>
+    </div>
+</section>
+
+<!-- Step 4: Standard Method -->
+<section id="step4">
+    <header>
+        <h3>Step 4: Standard Method Calculation</h3>
+        <p>Art. 220.42</p>
+    </header>
+    <div class="input-row">
+        <p>First 3000 VA at 100%:</p>
+        <span id="first-3000">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Remainder at 35%:</p>
+        <span id="remainder">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Total Standard Load:</p>
+        <span id="standard-total">0 VA</span>
+    </div>
+</section>
+
+<!-- Step 5: Fixed Appliances -->
+<section id="step5">
+    <header>
+        <h3>Step 5: Fixed Appliances</h3>
+        <p>Art. 220.53</p>
+		</header>
+		<!-- Water Heater -->
+<div class="input-row">
+    <label><input type="checkbox" id="water-heater"> Water Heater</label>
+    <span id="water-heater-load">4500 VA</span>
+</div>
+
+<!-- Microwave -->
+<div class="input-row">
+    <label><input type="checkbox" id="microwave"> Microwave</label>
+    <span id="microwave-load">1200 VA</span>
+</div>
+
+<!-- Dishwasher -->
+<div class="input-row">
+    <label><input type="checkbox" id="dishwasher"> Dishwasher</label>
+    <span id="dishwasher-load">1200 VA</span>
+</div>
+
+<!-- Trash Compactor  -->
+<div class="input-row">
+    <label>
+        <input type="checkbox" id="trash-compactor">
+        Trash Compactor
+        <select id="trash-compactor-select">
+            <option value="520">1/3 HP</option>
+            <option value="1176">1/2 HP</option> 
+				</select>
+    </label>
+    <span id="trash-compactor-load">0 VA</span>
+</div>
+
+<!-- Vacuum System  -->
+<div class="input-row">
+    <label>
+        <input type="checkbox" id="vacuum-system">
+        Vacuum System
+        <select id="vacuum-system-select"> 
+            <option value="1920">1 HP</option>
+            <option value="2880">2 HP</option>
+						<option value="4080">3 HP</option>     
+				</select>
+    </label>
+    <span id="vacuum-system-load">0 VA</span>
+</div>
+
+<!-- Garbage Disposal -->
+<div class="input-row">
+    <label>
+        <input type="checkbox" id="garbage-disposal">
+        Garbage Disposal
+        <select id="garbage-disposal-select">
+            	<option value="528">1/6 HP</option>
+							<option value="696">1/4 HP</option>
+            	<option value="864">1/3 HP</option>
+            	<option value="1176">1/2 HP</option>
+							<option value="1656">3/4 HP</option>
+							<option value="1920">1 HP</option>   
+				</select>
+    </label>
+    <span id="garbage-disposal-load">0 VA</span>
+</div>
+
+<!-- Sump Pump -->
+<div class="input-row">
+    <label>
+        <input type="checkbox" id="sump-pump">
+        Sump Pump
+        <select id="sump-pump-select">
+            	<option value="528">1/6 HP</option>
+							<option value="696">1/4 HP</option>
+            	<option value="864">1/3 HP</option>
+            	<option value="1176">1/2 HP</option>
+							<option value="1656">3/4 HP</option>
+							<option value="1920">1 HP</option>
+        </select>
+    </label>
+    <span id="sump-pump-load">0 VA</span>
+</div>
+
+<!-- Well Pump -->
+<div class="input-row">
+    <label>
+        <input type="checkbox" id="well-pump">
+        Well Pump
+        <select id="well-pump-select">
+							<option value="1176">1/2 HP (240V)</option>
+							<option value="1656">3/4 HP (240V)</option>	
+							<option value="1920">1 HP (240V)</option>
+							<option value="2400">1.5 HP (240V)</option>
+							<option value="2880">2 HP (240V)</option>
+							<option value="4080">3 HP (240V)</option>
+				</select>
+    </label>
+    <span id="well-pump-load">0 VA</span>
+</div>
+
+<!-- Pool Pump -->
+<div class="input-row">
+    <label>
+        <input type="checkbox" id="pool-pump">
+        Pool Pump
+        <select id="pool-pump-select">
+							<option value="1920">1 HP (240V)</option>
+							<option value="2400">1.5 HP (240V)</option>
+							<option value="2880">2 HP (240V)</option>
+							<option value="4080">3 HP (240V)</option>
+				</select>
+    </label>
+    <span id="pool-pump-load">0 VA</span>
+</div>
+
+<!-- HotTub/SPA  Pump -->
+<div class="input-row">
+    <label>
+        <input type="checkbox" id="spa-pump">
+        SPA Pump
+        <select id="spa-pump-select">
+							<option value="1940">1 HP (240V)</option>
+							<option value="2400">1.5 HP (240V)</option>
+							<option value="2880">2 HP (240V)</option>
+							<option value="4080">3 HP (240V)</option>
+				</select>
+    </label>
+    <span id="spa-pump-load">0 VA</span>
+</div>
+
+<!-- Garage Door -->
+<div class="input-row">
+    <label>
+        <input type="checkbox" id="garage-door">
+        Garage Door
+				<!-- Voltage details for Garage Door -->
+				<select id="garage-door-select">
+            	<option value="864">1/3 HP</option>
+            	<option value="1176">1/2 HP</option>
+							<option value="1656">3/4 HP</option>
+							<option value="1920">1 HP</option>
+				</select>
+    </label>
+    <span id="garage-door-load">0 VA</span>
+</div>
+
+<!-- Total Fixed Appliance Load -->
+<div class="input-row">
+    <button id="reset-step5" onclick="resetStep5()" 
+							style="padding: 10px 20px;
+												 background-color: #ff6666; 
+												 border: none; border-radius: 5px; 
+												 color: white; 
+												 font-size: 16px; 
+												 cursor: pointer;">
+        Reset Step 5
+    </button><!--Reset Step 5-->
+    
+		<p>Total Fixed Appliances Load:</p>
+    <span id="fixed-appliance-load">0 VA</span>
+</div>
+</section>
+
+<!-- Step 6: Clothes Dryer -->
+<section id="step6">
+    <header>
+        <h3>Step 6: Clothes Dryer</h3>
+        <p>Art. 220.54</p>
+    </header>
+    <div class="input-row">
+        <label><input type="checkbox" id="dryer"> Clothes Dryer</label>
+		</div>
+		
+    <div class="input-row">
+        <p> Total Clothes Dryer Load</p>
+        <span id="dryer-load">0 VA</span>
+    </div>
+</section>
+
+<!-- Step 7: Cooking Equipment -->
+<section id="step7">
+    <header>
+        <h3>Step 7: Cooking Equipment</h3>
+        <p>Art. 220.55</p>
+    </header>
+
+    <!-- Cooking Range -->
+    <div class="input-row">
+        <label><input type="checkbox" id="cooking-range"> Cooking Range</label>
+        <select id="cooking-range-value">
+            <option value="8000">Small (8k VA)</option>
+            <option value="12000">Large (12k VA)</option>
+        </select>
+        <span id="cooking-range-result">0 VA</span>
+    </div>
+
+    <!-- Counter Top Range -->
+    <div class="input-row">
+        <label><input type="checkbox" id="counter-top-range"> Counter Top Range</label>
+        <select id="counter-top-range-value">
+            <option value="8000">Small (8k VA)</option>
+            <option value="12000">Large (12k VA)</option>
+        </select>
+        <span id="counter-top-range-result">0 VA</span>
+    </div>
+
+    <!-- Wall Oven -->
+    <div class="input-row">
+        <label><input type="checkbox" id="wall-oven-range"> Wall Mounted Oven</label>
+        <select id="wall-oven-value">
+            <option value="4000">Small (4k VA)</option>
+            <option value="8000">Large (8k VA)</option>
+        </select>
+        <span id="wall-oven-result">0 VA</span>
+    </div>
+
+    <!-- Total Cooking Load -->
+    <div class="input-row">
+        <p>Total Cooking Equipment Load:</p>
+        <span id="total-cooking-load">0 VA</span>
+    </div>
+		</section>
+
+
+<!-- Step 8: EV Chargers -->
+		<section id="step8">
+    <header>
+        <h3>Step 8: EV Chargers</h3>
+        <p>Art. 625.42</p>
+    </header>
+		<div class="input-row">
+    <label><input type="checkbox" id="ev-charger-1"> EV Charger 1</label>
+    <select id="ev-charger-1-value">
+        <option value="7600">32A (7.6k VA)</option>
+        <option value="14400">48A (14.4k VA)</option>
+        <option value="19600">80A (19.6k VA)</option>
+    </select>
+    <span id="ev-charger-1-result">0 VA</span>
+</div>
+<div class="input-row">
+    <label><input type="checkbox" id="ev-charger-2"> EV Charger 2</label>
+    <select id="ev-charger-2-value">
+        <option value="7600">32A (7.6k VA)</option>
+        <option value="14400">48A (14.4k VA)</option>
+        <option value="19600">80A (19.6k VA)</option>
+    </select>
+    <span id="ev-charger-2-result">0 VA</span>
+</div>
+<div class="input-row">
+    <p>Total EV Charger Load:</p>
+    <span id="ev-charger-load">0 VA</span>
+</div>		
+</section>
+
+<!------------------------------------>
+<!--Noncoincident Loads. Where it is unlikely that two or more noncoincident loads will be in use simultaneously, it shall be permissible to use only the largest load(s) that will be used at one time for calculating the total load of a feeder or service.-->
+
+<!-- Step 9: HVAC -->
+<section id="step9">
+    <header>
+        <h3>Step 9: Noncoincident Loads</h3>
+        <p>Art. 220.60</p>
+    </header>
+
+		<div class="input-row">
+            <label for="heat-AC">
+						<input type="checkbox" id="heat-AC" onclick="calculateTotal()"> HEAT vs A/C</label>
+            <button class="location" onclick="getLocation()">Detect Climate Zone Automatically</button>
+    </div>				
+		<div class="input-row">
+        <label for="climateZone">Choose Climate Zone Manually:</label>
+        <select id="climateZone" onchange="updateClimateLoads()">
+            <option value="1">Zone 1 - Hot</option>
+            <option value="2">Zone 2 - Warm-Humid</option>
+            <option value="3">Zone 3 - Hot-Dry</option>
+            <option value="4">Zone 4 - Mixed-Humid</option>
+            <option value="5">Zone 5 - Cold</option>
+            <option value="6">Zone 6 - Very Cold</option>
+            <option value="7">Zone 7 - Subarctic</option>
+        </select>
+				</div>
+<br>
+				<h3>Hightest Value by Climate Zone:</h3>
+				<div class="input-row">
+            <p>A/C BTUs: </p><span id="ac-btu">0 BTU</span>
+				</div>
+				<div class="input-row">
+						<p>A/C Load in VA: </p><span id="ac-va">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>Heating BTUs: </p><span id="heat-btu">0 BTU</span>
+				</div>
+				<div class="input-row">
+						<p>Heating Load in VA: </p><span id="heat-va">0 VA</span>
+        </div>
+<br>
+				<h3>(Heating or AC)</h3>
+				<div class="input-row">          
+						<p>Highest Climate Zone Load: </p>
+						<span id="highest-zone-HVAC">0 VA</span>
+        </div>
+				
+<hr>	<br>
+				<h3>Hightest Value by Nameplate:</h3>
+				<br>	
+				<div class="input-row">
+                <label for="heatingLoad">Heating Load:</label>
+                <input type="number" id="heatingLoad" placeholder="Enter Heating Load (VA)" min="0">
+            </div>
+            <div class="input-row">
+                <label for="acLoad">Air Conditioning Load:</label>
+                <input type="number" id="acLoad" placeholder="Enter A/C Load (VA)" min="0">
+            </div>
+<br>
+						<h3>(Heating or AC)</h3>
+						<div class="input-row">
+                <span>Highest Nameplate Load:</span>
+                <span id="highest-nameplate-HVAC" class="value">0 VA</span>
+            </div>
+
+<hr><br>
+				
+        <div class="input-row">
+    		<button id="reset-step9" onclick="resetStep9()" style="padding: 10px 20px; background-color: #ff6666; border: none; border-radius: 5px; color: white; font-size: 16px; cursor: pointer;">
+        Reset Step 9
+    		</button>
+
+						<p>Total HVAC Load: </p>
+						<span id="highest-hvac">0 VA</span>
+        </div>
+</section>		
+
+
+<section id="step10">
+    <header>
+        <h3>Step 10: Summary of All Totals</h3>
+        <p>TOTAL</p>
+    </header>
+    <div class="input-row">
+        <p>Total Standard Load (Lighting, Small Appliances, Laundry):</p>
+        <span id="total-general-load">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Total Fixed Appliances Load:</p>
+        <span id="total-fixed-appliances">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Total Clothes Dryer Load:</p>
+        <span id="total-clothes-dryer">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Total Cooking Equipment Load:</p>
+        <span id="total-cooking-equipment">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Total EV Charger Load:</p>
+        <span id="total-ev-charger">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Total HVAC Load:</p>
+        <span id="total-hvac">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Final Summary Load:</p>
+        <span id="total-summary">0 VA</span>
+    </div>
+</section>
+
+
+<!-- Step 11: Neutral Load -->
+<section id="step11">
+    <header>
+        <h3>Step 11: Neutral Load</h3>
+        <p>Art. 220.61</p>
+    </header>
+    <div class="input-row">
+        <p>Neutral Demand Load:</p>
+        <span id="neutral-load">0 VA</span>
+    </div>
+</section>
+
+
+<!-- Step 12: Final Recommendations -->
+<section id="step12">
+    <header>
+        <h3>Step 12: Main Panel Service</h3>
+				<p>RECOM</p>				
+    </header>
+ 
+    <div class="input-row">
+        <p>Final Summary Load:</p>
+        <span id="final-summary-load-main">0 VA</span>
+    </div>
+    <div class="input-row">
+        <p>Panel Ampacity Recommendation:</p>
+        <span id="breaker-size">0 A</span>
+    </div>
+		<h3>Copper Wiring Service</h3>
+    <div class="input-row">
+        <p>Service Copper Wire:</p>
+        <span id="copper-service">#0</span>
+    </div>
+		<div class="input-row">
+        <p>Ground Copper Wire:</p>
+        <span id="copper-ground">#0</span>
+    </div>
+		<h3>Aluminum Wiring Service</h3>
+		<div class="input-row">
+        <p>Service Aluminum Wire:</p>
+        <span id="aluminum-service">#0</span>
+    </div>
+    <div class="input-row">
+        <p>Ground Aluminum Wire:</p>
+        <span id="aluminum-ground">#0</span>
+    </div>
+</section>
+
+
+
+    <button onclick="resetForm()">Reset</button>
+
+<br><br>
+		<!-- Generate PDF Report -->
+  <button onclick="generatePDF()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+    Generate PDF Report
+	</button>
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+<script>
+function generatePDF() {
+    // Create a new jsPDF instance in Letter format
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        format: 'letter', // 8.5 x 11 inches',
+        unit: 'in',       // Measurement unit in inches
+    });
+
+    // Get current date and time
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString();
+    const formattedTime = currentDate.toLocaleTimeString();
+
+    // Report Metadata
+    const title = "Dwelling Load Calculation Report";
+    const subtitle = "(Based on NEC Standards)";
+    const copyright = "© 2024 MaDu Design by Marcos Duprey. All Rights Reserved.";
+    const dateTime = `Generated on: ${formattedDate} at ${formattedTime}`;
+
+    // Step Data
+    const step1 = `Square Footage: ${document.getElementById('sq-ft').value || 'N/A'}`;
+    const lightingLoad = `Lighting Load: ${document.getElementById('lighting-load').innerText || 'N/A'}`;
+    const receptacles = `Receptacle Circuits: ${document.getElementById('receptacle-circuits').innerText || 'N/A'}`;
+
+    const smallAppliancesLoad = `Small Appliances Load: ${document.getElementById('small-appliances-load').innerText || 'N/A'}`;
+    const laundryLoad = `Laundry Load: ${document.getElementById('laundry-load').innerText || 'N/A'}`;
+
+    const step4StandardMethod = `Standard Load Total: ${document.getElementById('standard-total').innerText || 'N/A'}`;
+
+    const fixedAppliancesLoad = `Total Fixed Appliances Load: ${document.getElementById('total-fixed-appliances').innerText || 'N/A'}`;
+
+    const dryerLoad = `Clothes Dryer Load: ${document.getElementById('dryer-load').innerText || 'N/A'}`;
+    const cookingLoad = `Cooking Equipment Load: ${document.getElementById('total-cooking-load').innerText || 'N/A'}`;
+
+    const evChargerLoad = `EV Charger Load: ${document.getElementById('ev-charger-load').innerText || 'N/A'}`;
+
+    const hvacLoad = `HVAC Load: ${document.getElementById('total-hvac').innerText || 'N/A'}`;
+
+    const neutralLoad = `Neutral Load: ${document.getElementById('neutral-load').innerText || 'N/A'}`;
+
+    const summaryLoad = `Final Summary Load: ${document.getElementById('total-summary').innerText || 'N/A'}`;
+    const breakerSize = `Panel Recommendation: ${document.getElementById('breaker-size').innerText || 'N/A'}`;
+    const copperService = `Copper Service Wire: ${document.getElementById('copper-service').innerText || 'N/A'}`;
+    const aluminumService = `Aluminum Service Wire: ${document.getElementById('aluminum-service').innerText || 'N/A'}`;
+
+    // Add content to the PDF
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(title, 0.5, 1); // Title at (x: 0.5 in, y: 1 in)
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(subtitle, 0.5, 1.3);
+
+    doc.setFontSize(10);
+    doc.text(dateTime, 0.5, 1.6);
+
+    doc.setFontSize(12);
+
+    // Step 1
+    doc.text("Step 1: General Lighting and Receptacles", 0.5, 1.9);
+    doc.text(step1, 0.7, 2.2);
+    doc.text(lightingLoad, 0.7, 2.4);
+    doc.text(receptacles, 0.7, 2.6);
+
+    // Step 2
+    doc.text("Step 2: Small Appliances", 0.5, 2.9);
+    doc.text(smallAppliancesLoad, 0.7, 3.1);
+
+    // Step 3
+    doc.text("Step 3: Laundry", 0.5, 3.4);
+    doc.text(laundryLoad, 0.7, 3.6);
+
+    // Step 4
+    doc.text("Step 4: Standard Method Calculation", 0.5, 3.9);
+    doc.text(step4StandardMethod, 0.7, 4.1);
+
+    // Step 5
+    doc.text("Step 5: Fixed Appliances", 0.5, 4.4);
+    doc.text(fixedAppliancesLoad, 0.7, 4.6);
+
+    // Step 6
+    doc.text("Step 6: Clothes Dryer", 0.5, 4.9);
+    doc.text(dryerLoad, 0.7, 5.1);
+
+    // Step 7
+    doc.text("Step 7: Cooking Equipment", 0.5, 5.4);
+    doc.text(cookingLoad, 0.7, 5.6);
+
+    // Step 8
+    doc.text("Step 8: EV Chargers", 0.5, 5.9);
+    doc.text(evChargerLoad, 0.7, 6.1);
+
+    // Step 9
+    doc.text("Step 9: HVAC", 0.5, 6.4);
+    doc.text(hvacLoad, 0.7, 6.6);
+
+    // Step 11
+    doc.text("Step 11: Neutral Load", 0.5, 6.9);
+    doc.text(neutralLoad, 0.7, 7.1);
+
+    // Step 10: Summary
+    doc.text("Step 10: Final Summary", 0.5, 7.4);
+    doc.text(summaryLoad, 0.7, 7.6);
+    doc.text(breakerSize, 0.7, 7.8);
+    doc.text(copperService, 0.7, 8);
+    doc.text(aluminumService, 0.7, 8.2);
+
+    // Copyright
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "italic");
+    doc.text(copyright, 0.5, 10.5);
+
+    // Save the PDF
+    doc.save("Dwelling_Load_Calculation_Report.pdf");
+}
+
+
+</script>
+
+
+
+
+<script>
+// -------------------------------
+// Step 1: General Lighting and Receptacles
+function calculateLightingLoad() {
+    const sqft = parseInt(document.getElementById("sq-ft").value) || 0;
+    const lightingLoad = sqft * 3; // 3 VA per square foot
+    const receptacleCircuits = Math.ceil(lightingLoad / (15 * 120)); // 15A, 120V circuits
+    document.getElementById("lighting-load").innerText = `${lightingLoad} VA`;
+    document.getElementById("receptacle-circuits").innerText = receptacleCircuits;
+    return lightingLoad;		
+}
+// -------------------------------
+// input event listener
+// recalculate and update dependent values:
+document.getElementById("sq-ft").addEventListener("input", () => {
+    calculateLightingLoad();
+    calculateStandardLoad();
+    calculateHVACLoad();
+    calculateFinalLoad();
+});
+
+// -------------------------------
+// Step 2: Small Appliances
+function calculateSmallApplianceLoad() {
+    const smallApplianceCircuits = parseInt(document.getElementById("small-appliances").value) || 1;
+    const smallApplianceLoad = smallApplianceCircuits * 1500; // 1500 VA per circuit
+    document.getElementById("small-appliances-load").innerText = `${smallApplianceLoad} VA`;
+    return smallApplianceLoad;
+		document.getElementById("small-appliances").addEventListener("change", calculateSmallApplianceLoad);}
+
+
+// Step 3: Laundry Load
+function calculateLaundryLoad() {
+    const laundryCircuits = parseInt(document.getElementById("laundry").value) || 1;
+    const laundryLoad = laundryCircuits * 1500; // 1500 VA per circuit
+    document.getElementById("laundry-load").innerText = `${laundryLoad} VA`;
+    return laundryLoad;
+}
+    document.getElementById("laundry").addEventListener("change", calculateLaundryLoad);
+
+
+// -------------------------------
+// Step 4: Standard Method Calculation
+function calculateStandardLoad() {
+    const lightingLoad = calculateLightingLoad(); // Step 1
+    const smallApplianceLoad = calculateSmallApplianceLoad(); // Step 2
+    const laundryLoad = calculateLaundryLoad(); // Step 3
+
+    const generalLoad = lightingLoad + smallApplianceLoad + laundryLoad;
+
+    const first3000 = Math.min(generalLoad, 3000); // First 3000 VA at 100%
+    const remainder = generalLoad > 3000 ? (generalLoad - 3000) * 0.35 : 0; // Remainder at 35%
+    const totalStandardLoad = first3000 + remainder;
+
+    // Update the UI
+    document.getElementById("first-3000").innerText = `${first3000} VA`;
+    document.getElementById("remainder").innerText = `${remainder} VA`;
+    document.getElementById("standard-total").innerText = `${totalStandardLoad} VA`;
+
+    return totalStandardLoad;
+}
+
+document.getElementById("sq-ft").addEventListener("input", calculateStandardLoad); // Lighting Load
+		document.getElementById("small-appliances").addEventListener("change", calculateStandardLoad); // Small Appliances
+		document.getElementById("laundry").addEventListener("change", calculateStandardLoad); // Laundry Load
+		
+// -------------------------------
+// Ensure calculateStandardLoad is triggered whenever any dependent step changes:
+document.querySelectorAll("#sq-ft, #small-appliances, #laundry").forEach(input => {
+    input.addEventListener("change", calculateStandardLoad);
+});
+
+
+// -------------------------------
+// Step 5: Fixed Appliances
+function calculateFixedApplianceLoad() {
+    let fixedLoad = 0;
+
+    // Utility function for appliances without dropdowns
+    function calculateCheckboxLoad(checkboxId, fixedValue, displayId) {
+        const isChecked = document.getElementById(checkboxId).checked;
+        const load = isChecked ? fixedValue : 0;
+
+        // Update individual appliance load display
+        document.getElementById(displayId).innerText = `${load} VA`;
+        return load;
+    }
+
+    // Utility function for appliances with dropdowns
+    function calculateDropdownLoad(checkboxId, selectId, displayId) {
+        const checkbox = document.getElementById(checkboxId);
+        const selectValue = parseInt(document.getElementById(selectId).value) || 0;
+        const load = checkbox.checked ? selectValue : 0;
+
+        // Update individual appliance load display
+        document.getElementById(displayId).innerText = `${load} VA`;
+        return load;
+    }
+
+    // Appliances without dropdowns
+    fixedLoad += calculateCheckboxLoad("water-heater", 4500, "water-heater-load"); // Water Heater
+    fixedLoad += calculateCheckboxLoad("microwave", 1200, "microwave-load");       // Microwave
+    fixedLoad += calculateCheckboxLoad("dishwasher", 1200, "dishwasher-load");     // Dishwasher
+
+    // Appliances with dropdowns
+    fixedLoad += calculateDropdownLoad("trash-compactor", "trash-compactor-select", "trash-compactor-load");
+    fixedLoad += calculateDropdownLoad("vacuum-system", "vacuum-system-select", "vacuum-system-load");
+    fixedLoad += calculateDropdownLoad("garbage-disposal", "garbage-disposal-select", "garbage-disposal-load");
+    fixedLoad += calculateDropdownLoad("sump-pump", "sump-pump-select", "sump-pump-load");
+    fixedLoad += calculateDropdownLoad("well-pump", "well-pump-select", "well-pump-load");
+    fixedLoad += calculateDropdownLoad("pool-pump", "pool-pump-select", "pool-pump-load");
+    fixedLoad += calculateDropdownLoad("spa-pump", "spa-pump-select", "spa-pump-load");
+    fixedLoad += calculateDropdownLoad("garage-door", "garage-door-select", "garage-door-load");
+
+    // Update the total fixed appliance load
+    document.getElementById("fixed-appliance-load").innerText = `${fixedLoad} VA`;
+    return fixedLoad;
+}
+
+
+// Add event listeners for all checkboxes and dropdowns in Step 5
+document.querySelectorAll("#step5 input[type='checkbox'], #step5 select").forEach(input => {
+    input.addEventListener("change", calculateFixedApplianceLoad);
+});
+
+
+// -------------------------------
+// Step 6: Clothes Dryer
+function calculateClothesDryerLoad() {
+    const dryerLoad = document.getElementById("dryer").checked ? 5000 : 0; // 5000 VA if present
+    document.getElementById("dryer-load").innerText = `${dryerLoad} VA`;
+    return dryerLoad;
+}
+		document.getElementById("dryer").addEventListener("change", calculateClothesDryerLoad);
+
+
+// -------------------------------
+// Step 7: Cooking Equipment
+function calculateCookingLoad() {
+    let totalCookingLoad = 0;
+
+    // Cooking Range
+    const cookingRange = document.getElementById("cooking-range");
+    const cookingRangeValue = cookingRange.checked
+        ? parseInt(document.getElementById("cooking-range-value").value) || 0
+        : 0;
+    document.getElementById("cooking-range-result").innerText = `${cookingRangeValue} VA`;
+    totalCookingLoad += cookingRangeValue;
+
+    // Counter Top Range
+    const counterTopRange = document.getElementById("counter-top-range");
+    const counterTopValue = counterTopRange.checked
+        ? parseInt(document.getElementById("counter-top-range-value").value) || 0
+        : 0;
+    document.getElementById("counter-top-range-result").innerText = `${counterTopValue} VA`;
+    totalCookingLoad += counterTopValue;
+
+    // Wall Oven
+    const wallOven = document.getElementById("wall-oven-range");
+    const wallOvenValue = wallOven.checked
+        ? parseInt(document.getElementById("wall-oven-value").value) || 0
+        : 0;
+    document.getElementById("wall-oven-result").innerText = `${wallOvenValue} VA`;
+    totalCookingLoad += wallOvenValue;
+
+    // Update Total Cooking Load
+    document.getElementById("total-cooking-load").innerText = `${totalCookingLoad} VA`;
+    return totalCookingLoad;
+}
+
+// Attach Event Listeners
+document.querySelectorAll("#step7 input[type='checkbox'], #step7 select").forEach(input => {
+    input.addEventListener("change", calculateCookingLoad);
+});
+
+
+// General Event Listeners for Final Load Updates
+document.querySelectorAll("input, select").forEach(input => {
+    input.addEventListener("change", calculateFinalLoad);
+});
+
+
+// -------------------------------
+// Step 8: EV Chargers
+function calculateEVLoad() {
+    let evLoad = 0;
+
+    // EV Charger 1
+    const evCharger1 = document.getElementById("ev-charger-1");
+    const evCharger1Value = evCharger1.checked
+        ? parseInt(document.getElementById("ev-charger-1-value").value) || 0
+        : 0;
+    document.getElementById("ev-charger-1-result").innerText = `${evCharger1Value} VA`;
+    evLoad += evCharger1Value;
+
+    // EV Charger 2
+    const evCharger2 = document.getElementById("ev-charger-2");
+    const evCharger2Value = evCharger2.checked
+        ? parseInt(document.getElementById("ev-charger-2-value").value) || 0
+        : 0;
+    document.getElementById("ev-charger-2-result").innerText = `${evCharger2Value} VA`;
+    evLoad += evCharger2Value;
+
+    // Update total EV load
+    document.getElementById("ev-charger-load").innerText = `${evLoad} VA`;
+    return evLoad;
+}
+
+// Attach Event Listeners
+document.querySelectorAll("#step8 input[type='checkbox'], #step8 select").forEach(input => {
+    input.addEventListener("change", calculateEVLoad);
+});
+
+
+// Event Listeners for EV Chargers
+document.querySelectorAll("#step8 input[type='checkbox'], #step8 select").forEach(input => {
+    input.addEventListener("change", calculateEVLoad);
+});
+
+
+// EV Chargers
+document.querySelectorAll("#step8 input[type='checkbox'], #step8 select").forEach(input => {
+    input.addEventListener("change", calculateEVLoad);
+});
+
+
+// -------------------------------
+// Step 9: HVAC (Heating and Cooling)
+
+// Calculate Climate Zone Load (Heating and A/C based on climate zone)
+function calculateClimateLoad() {
+    const squareFootage = parseFloat(document.getElementById('sq-ft').value) || 0;
+    const climateZone = parseInt(document.getElementById('climateZone').value) || 4; // Default to Zone 4
+
+    if (squareFootage <= 0) {
+        alert('Please enter a valid square footage greater than zero.');
+        return;
+    }
+
+    // Climate data for zones (Heat and A/C in BTU per square foot)
+    const climateData = {
+    1: { heat: 10, ac: 30 }, // Zone 1: Hot & Very Humid
+    2: { heat: 12, ac: 25 }, // Zone 2: Hot & Humid
+    3: { heat: 15, ac: 20 }, // Zone 3: Warm & Mixed
+    4: { heat: 18, ac: 15 }, // Zone 4: Mixed-Humid
+    5: { heat: 25, ac: 10 }, // Zone 5: Cold
+    6: { heat: 30, ac: 8 },  // Zone 6: Very Cold
+    7: { heat: 35, ac: 6 },  // Zone 7: Subarctic
+};
+
+    const selectedZone = climateData[climateZone];
+    const heatBTU = selectedZone.heat * squareFootage;
+    const acBTU = selectedZone.ac * squareFootage;
+
+    // Convert BTU to VA (1 BTU ≈ 3.413 VA)
+    const heatVA = heatBTU / 3.413;
+    const acVA = acBTU / 3.413;
+
+    // Update UI with calculated Climate Zone values
+    document.getElementById('heat-btu').innerText = heatBTU.toFixed(0) + " BTU";
+    document.getElementById('heat-va').innerText = heatVA.toFixed(0) + " VA";
+    document.getElementById('ac-btu').innerText = acBTU.toFixed(0) + " BTU";
+    document.getElementById('ac-va').innerText = acVA.toFixed(0) + " VA";
+
+    // Return the highest load (Heating vs A/C)
+    return Math.max(heatVA, acVA);
+}
+
+// Calculate Total HVAC Load (Manual vs Climate Zone)
+
+function calculateHVACLoad() {
+    const heatACCheckbox = document.getElementById("heat-AC").checked;
+
+    // If checkbox is unselected, reset all HVAC values to 0
+    if (!heatACCheckbox) {
+        document.getElementById("highest-zone-HVAC").innerText = "0 VA";
+        document.getElementById("highest-nameplate-HVAC").innerText = "0 VA";
+        document.getElementById("highest-hvac").innerText = "0 VA";
+        return 0; // Return 0 since no HVAC load should be included
+    }
+
+    // Manual Input Calculation (heating and A/C loads)
+    const heatingLoadInput = parseFloat(document.getElementById("heatingLoad").value) || 0;
+    const acLoadInput = parseFloat(document.getElementById("acLoad").value) || 0;
+    const highestManualLoad = Math.max(heatingLoadInput, acLoadInput);
+
+    // Climate Zone Calculation
+    const highestClimateLoad = calculateClimateLoad();
+
+    // Determine the highest load: Climate Zone vs Manual Input
+    const highestHVACLoad = Math.max(highestManualLoad, highestClimateLoad);
+
+    // Update UI with calculated loads
+    document.getElementById("highest-zone-HVAC").innerText = `${highestClimateLoad.toFixed(0)} VA`;
+    document.getElementById("highest-nameplate-HVAC").innerText = `${highestManualLoad.toFixed(0)} VA`;
+    document.getElementById("highest-hvac").innerText = `${highestHVACLoad.toFixed(0)} VA`;
+
+      // Return the highest load for summary
+			return highestHVACLoad;
+}
+ 
+// Climate Zone Detection via Geolocation
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
+}
+
+// Handles successful geolocation and sets the climate zone.
+function showPosition(position) {
+    const lat = position.coords.latitude;
+    const zone = determineClimateZone(lat);
+    document.getElementById('climateZone').value = zone;
+    calculateClimateLoad(); // Recalculate loads based on detected zone
+    alert(`Detected Climate Zone: ${zone}`);
+}
+
+// Determine Climate Zone based on Latitude
+function determineClimateZone(lat) {
+    if (lat >= 66.5) return 7; // Subarctic
+    if (lat >= 60) return 6;   // Very Cold
+    if (lat >= 45) return 5;   // Cold
+    if (lat >= 35) return 4;   // Mixed-Humid
+    if (lat >= 25) return 3;   // Hot-Dry
+    if (lat >= 15) return 2;   // Warm-Humid
+    return 1;                  // Hot
+}
+
+// Handle geolocation errors
+function showError(error) {
+    const errorMessages = {
+        1: "User denied the request for Geolocation.",
+        2: "Location information is unavailable.",
+        3: "The request to get user location timed out.",
+        4: "An unknown error occurred."
+    };
+    alert(errorMessages[error.code] || errorMessages[4]);
+}
+
+// -------------------------------
+// Reset Step 9 Inputs and Calculations
+function resetStep9() {
+    document.getElementById("climateZone").value = "1"; // Default to Zone 1
+    document.getElementById("heatingLoad").value = "";
+    document.getElementById("acLoad").value = "";
+    document.getElementById("heat-btu").innerText = "0 BTU";
+    document.getElementById("ac-btu").innerText = "0 BTU";
+    document.getElementById("heat-va").innerText = "0 VA";
+    document.getElementById("ac-va").innerText = "0 VA";
+    document.getElementById("highest-zone-HVAC").innerText = "0 VA";
+    document.getElementById("highest-nameplate-HVAC").innerText = "0 VA";
+    document.getElementById("highest-hvac").innerText = "0 VA";
+}
+
+// Attach event listeners for HVAC inputs
+document.getElementById("heat-AC").addEventListener("change", calculateHVACLoad);
+document.getElementById("heatingLoad").addEventListener("input", calculateHVACLoad);
+document.getElementById("acLoad").addEventListener("input", calculateHVACLoad);
+document.getElementById("climateZone").addEventListener("change", () => {
+    calculateClimateLoad(); // Update climate zone calculations
+    calculateHVACLoad();    // Update HVAC calculations
+});
+
+
+// -------------------------------
+// Step 10: Summary and Final Load Calculation
+function calculateFinalLoad() {
+    const standardLoad = calculateStandardLoad(); // Step 4
+    const fixedLoad = calculateFixedApplianceLoad(); // Step 5
+    const dryerLoad = calculateClothesDryerLoad(); // Step 6
+    const cookingLoad = calculateCookingLoad(); // Step 7
+    const evLoad = calculateEVLoad(); // Step 8
+    const hvacLoad = calculateHVACLoad(); // Step 9
+
+    // Calculate Final Total Load
+    const finalLoad = standardLoad + fixedLoad + dryerLoad + cookingLoad + evLoad + hvacLoad;
+
+    // Update UI for Step 10: Summary
+    document.getElementById("total-general-load").innerText = `${standardLoad.toFixed(0)} VA`;
+    document.getElementById("total-fixed-appliances").innerText = `${fixedLoad.toFixed(0)} VA`;
+    document.getElementById("total-clothes-dryer").innerText = `${dryerLoad.toFixed(0)} VA`;
+    document.getElementById("total-cooking-equipment").innerText = `${cookingLoad.toFixed(0)} VA`;
+    document.getElementById("total-ev-charger").innerText = `${evLoad.toFixed(0)} VA`;
+    document.getElementById("total-hvac").innerText = `${hvacLoad.toFixed(0)} VA`;
+    document.getElementById("total-summary").innerText = `${finalLoad.toFixed(0)} VA`;
+
+    // Trigger downstream calculations
+    calculateNeutralLoad(finalLoad);
+    recommendBreakerAndWire(finalLoad);
+
+    return finalLoad;
+}
+
+// Event Listener: Trigger Final Load Calculation on Changes
+document.querySelectorAll("input, select").forEach(input => {
+    input.addEventListener("change", calculateFinalLoad);
+});
+
+
+// -------------------------------
+// Step 11: Neutral Load
+function calculateNeutralLoad(totalLoad) {
+    const neutralLoad = totalLoad * 0.7; // Neutral load is 70% of total load
+    document.getElementById("neutral-load").innerText = `${neutralLoad.toFixed(0)} VA`;
+    return neutralLoad;
+}
+
+		document.querySelectorAll("input, select").forEach(input => {
+    input.addEventListener("change", () => {
+        const totalLoad = calculateFinalLoad();
+        calculateNeutralLoad(totalLoad);
+    });
+});
+
+
+// -------------------------------
+// Step 12: Service Recommendations
+function recommendBreakerAndWire(finalLoad) {
+    const breakerSizes = [100, 125, 150, 200, 300, 400];
+    const wireSizes = {
+        copper: { 100: "#4", 125: "#2", 150: "#1", 200: "#1/0", 300: "#4/0", 400: "#250" },
+        aluminum: { 100: "#2", 125: "#1/0", 150: "#2/0", 200: "#3/0", 300: "#4/0", 400: "#250" },
+    };
+    const groundSizes = {
+        copper: { 100: "#8", 125: "#6", 150: "#6", 200: "#4", 300: "#3", 400: "#2" },
+        aluminum: { 100: "#6", 125: "#4", 150: "#4", 200: "#2", 300: "#1", 400: "#1/0" },
+    };
+
+    const breaker = breakerSizes.find(size => finalLoad <= size * 240) || 400;
+    const copperWire = wireSizes.copper[breaker];
+    const aluminumWire = wireSizes.aluminum[breaker];
+    const copperGround = groundSizes.copper[breaker];
+    const aluminumGround = groundSizes.aluminum[breaker];
+
+    document.getElementById("breaker-size").innerText = `${breaker} A`;
+    document.getElementById("copper-service").innerText = copperWire;
+    document.getElementById("aluminum-service").innerText = aluminumWire;
+    document.getElementById("copper-ground").innerText = copperGround;
+    document.getElementById("aluminum-ground").innerText = aluminumGround;
+}
+    
+		    // Update UI
+    document.getElementById("final-summary-load-main").innerText = `${finalLoad.toFixed(0)} VA`;
+
+// -------------------------------
+// Event Listeners
+document.getElementById("sq-ft").addEventListener("input", calculateFinalLoad);
+document.getElementById("small-appliances").addEventListener("change", calculateFinalLoad);
+document.getElementById("laundry-circuits").addEventListener("change", calculateFinalLoad);
+document.querySelectorAll("input[type='checkbox'], input[type='number']").forEach(input =>
+    input.addEventListener("input", calculateFinalLoad)
+);
+document.getElementById("cooking-range-value").addEventListener("change", calculateFinalLoad);
+
+
+
+</script>
+
+<script>
+// Reset Step 1: General Lighting and Receptacles
+function resetStep1() {
+    // Reset the Square Footage input
+    document.getElementById("sq-ft").value = "";
+
+    // Reset the calculated results for Step 1
+    document.getElementById("lighting-load").innerText = "0 VA";
+    document.getElementById("receptacle-circuits").innerText = "0";
+
+    // Trigger recalculations if necessary
+    calculateStandardLoad();
+}
+
+
+// Reset Step 5: Fixed Appliances
+function resetStep5() {
+    // Reset all checkboxes in Step 5
+    document.querySelectorAll("#step5 input[type='checkbox']").forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // Reset dropdowns to their default values
+    document.querySelectorAll("#step5 select").forEach(select => {
+        select.value = select.options[0].value; // Default to the first option
+    });
+
+    // Clear individual appliance loads
+    document.querySelectorAll("#step5 span[id$='-load']").forEach(span => {
+        span.innerText = "0 VA"; // Reset appliance load displays
+    });
+
+    // Reset the total fixed appliances load in Step 5
+    document.getElementById("fixed-appliance-load").innerText = "0 VA";
+
+    // ALSO reset the total fixed appliances load displayed in Step 10
+    document.getElementById("total-fixed-appliances").innerText = "0 VA";
+
+    // Trigger recalculation of the final load in Step 10
+    calculateFinalLoad();
+}
+
+
+// Reset Step 9: HVAC
+function resetStep9() {
+    // Reset all Step 9-specific inputs
+    document.getElementById("heat-AC").checked = false; // Uncheck HEAT vs A/C
+    document.getElementById("heatingLoad").value = ""; // Clear manual heating load input
+    document.getElementById("acLoad").value = ""; // Clear manual cooling load input
+    document.getElementById("climateZone").value = "1"; // Reset climate zone to default
+
+    // Reset calculated HVAC loads
+    document.getElementById("heat-btu").innerText = "0 BTU";
+    document.getElementById("ac-btu").innerText = "0 BTU";
+    document.getElementById("heat-va").innerText = "0 VA";
+    document.getElementById("ac-va").innerText = "0 VA";
+    document.getElementById("highest-zone-HVAC").innerText = "0 VA";
+    document.getElementById("highest-nameplate-HVAC").innerText = "0 VA";
+    document.getElementById("highest-hvac").innerText = "0 VA";
+
+    // ALSO reset the Total HVAC Load displayed in Step 10
+    document.getElementById("total-hvac").innerText = "0 VA";
+
+    // Trigger recalculation of the final load in Step 10
+    calculateFinalLoad();
+}
+
+
+// ResetForm Function
+function resetForm() {
+    // Step 1: General Lighting and Receptacles
+    document.getElementById("sq-ft").value = "";
+    document.getElementById("lighting-load").innerText = "0 VA";
+    document.getElementById("receptacle-circuits").innerText = ""; // Clear to blank
+
+    // Step 2: Small Appliances
+    document.getElementById("small-appliances").value = "2"; // Default value
+    document.getElementById("small-appliances-load").innerText = "0 VA";
+
+    // Step 3: Laundry
+    document.getElementById("laundry").value = "1"; // Default value
+    document.getElementById("laundry-load").innerText = "0 VA";
+
+    // Step 4: Standard Method Results
+    document.getElementById("first-3000").innerText = "0 VA";
+    document.getElementById("remainder").innerText = "0 VA";
+    document.getElementById("standard-total").innerText = "0 VA";
+
+    // Step 5: Fixed Appliances
+    document.querySelectorAll("#step5 input[type='checkbox']").forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll("#step5 select").forEach(select => {
+        select.value = select.options[0].value; // Default to the first option
+    });
+    document.getElementById("fixed-appliance-load").innerText = "0 VA";
+
+    // Step 6: Clothes Dryer
+    document.getElementById("dryer").checked = false;
+    document.getElementById("dryer-load").innerText = "0 VA";
+
+    // Step 7: Cooking Equipment
+    document.querySelectorAll("#step7 input[type='checkbox']").forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll("#step7 select").forEach(select => {
+        select.value = select.options[0].value;
+    });
+    document.getElementById("total-cooking-load").innerText = "0 VA";
+
+    // Step 8: EV Chargers
+    document.querySelectorAll("#step8 input[type='checkbox']").forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll("#step8 select").forEach(select => {
+        select.value = select.options[0].value;
+    });
+    document.getElementById("ev-charger-load").innerText = "0 VA";
+
+    // Step 9: HVAC
+    document.getElementById("heat-AC").checked = false;
+    document.getElementById("heatingLoad").value = "";
+    document.getElementById("acLoad").value = "";
+    document.getElementById("climateZone").value = "1"; // Reset Climate Zone to default
+    document.getElementById("heat-btu").innerText = "0 BTU";
+    document.getElementById("ac-btu").innerText = "0 BTU";
+    document.getElementById("heat-va").innerText = "0 VA";
+    document.getElementById("ac-va").innerText = "0 VA";
+    document.getElementById("highest-zone-HVAC").innerText = "0 VA";
+    document.getElementById("highest-nameplate-HVAC").innerText = "0 VA";
+    document.getElementById("highest-hvac").innerText = "0 VA";
+
+    // Step 10: Summary
+    document.getElementById("total-general-load").innerText = "0 VA";
+    document.getElementById("total-fixed-appliances").innerText = "0 VA";
+    document.getElementById("total-clothes-dryer").innerText = "0 VA";
+    document.getElementById("total-cooking-equipment").innerText = "0 VA";
+    document.getElementById("total-ev-charger").innerText = "0 VA";
+    document.getElementById("total-hvac").innerText = "0 VA";
+    document.getElementById("total-summary").innerText = "0 VA";
+
+    // Step 11: Neutral Load
+    document.getElementById("neutral-load").innerText = "0 VA"; // Reset the Neutral Demand Load
+
+    // Step 12: Main Panel Service Recommendations
+    document.getElementById("final-summary-load-main").innerText = "0 VA";
+    document.getElementById("breaker-size").innerText = "0 A";
+    document.getElementById("copper-service").innerText = "#0";
+    document.getElementById("aluminum-service").innerText = "#0";
+    document.getElementById("copper-ground").innerText = "#0";
+    document.getElementById("aluminum-ground").innerText = "#0";
+}
+</script>
+
+
+</body>
+</html>
