@@ -1,0 +1,2539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+	<!-- -----------------------------
+				Manifest: Required for installable apps.
+				Allows icon, name, theme color, start screen. 
+				----------------------------- -->
+<link rel="manifest" href="manifest.json">
+	
+	<!-- -----------------------------
+				Theme-Color  controls: browser toolbar color & Android install splash.
+				----------------------------- -->
+<meta name="theme-color" content="#0f766e">
+	
+	<!-- -----------------------------
+				Prevent accidental zoom while signing. Huge improvement on iPad.
+				----------------------------- -->
+<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+
+	<!-- -----------------------------
+				iOS tags: allows Add to Home Screen on iPhone/iPad.
+				----------------------------- -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-touch-fullscreen" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PanelPro">
+<link rel="apple-touch-icon" href="icon-192.png">
+	
+<title>Electrical Estimate – Panel Upgrade</title>
+
+<style>
+/* =====================================================
+   PANEL ESTIMATE PRO — CORE STYLESHEET
+   Organized: Base → Layout → Components → Header → 
+              Signature → Tables → Actions → Print
+===================================================== */
+
+/* ================================
+   1. GLOBAL / RESET
+================================ */
+:root {
+  --primary: #0f766e;
+  --primary-dark: #115e59;
+  --bg-soft: #f1f5f9;
+  --border-soft: #e5e7eb;
+  --success: #16a34a;
+  --warning: #fbbf24;
+}
+
+html {
+  scroll-padding-top: 80px; /* adjust to header height */
+	scroll-behavior: smooth;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1f2937;
+	background: #f1f5f9;
+}
+
+label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.container {
+  max-width: 950px;
+  margin: auto;
+  background: #ffffff;
+  padding: 35px;
+	margin-bottom:10px;
+  border-radius: 12px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.08);
+}
+section {
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:18px;
+  margin-bottom:24px;
+}
+
+
+/* ================================
+   2. TYPOGRAPHY
+================================ */
+
+h2 {
+  color:var(--primary);
+	margin-bottom: 10px;
+}
+
+/* ================================
+   3. FORM ELEMENTS
+================================ */
+
+input, select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+	border: 1px solid #d1d5db;
+  transition: border 0.2s ease;
+
+  width: none;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: #0f766e;
+}
+
+/*-- CLIENT Information--*/
+#clientName	{
+	width:70%;
+	}
+
+#street	{
+	width:90%;
+	}
+	
+#city	{
+	width:40%;
+}
+
+#zip	{
+  width:30%;
+}
+
+#clientPhone		{
+width:30%;
+}
+
+#clientEmail	{
+width:30%;
+}
+
+#estimateDate,
+#signatureDate {
+  width: 40%;
+  padding: 0 5px;
+}
+
+
+/* ================================
+   4. HEADER (DOCUMENT HEADER)
+================================ */
+
+ .workflow{
+  text-align:center;
+  font-size:13px;
+  color:#64748b;
+  margin-top:5px;
+	margin-bottom:5px;
+}			
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 15px;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-right {
+  text-align: right;
+  min-width: 260px;
+}
+
+.meta-block div {
+  margin-bottom: 6px;
+}
+
+.qr-box {
+  margin-top: 10px;
+}
+
+.promoBox {
+  margin-top: 15px;
+  font-size: 12px;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+  padding: 8px;
+  border: 1px dashed #9ca3af;
+  background: #f9fafb;
+  text-align: center;
+} 
+
+.company, .meta { font-size: 14px; line-height: 1.6; }
+.meta { text-align: right; }
+
+#estimateNumber	{
+color:#555;
+}
+
+/* ================================
+   STATUS BADGE
+================================ */
+
+.statusBadge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  display: inline-block;
+  margin-top: 10px;
+  transition: all .3s ease;
+}
+
+.statusBadge.draft {
+  background: #fbbf24;
+  color: #000;
+}
+
+.statusBadge.signed {
+  background: #16a34a;
+  color: #fff;
+}
+
+.statusBadge.tampered {
+  background: #b91c1c;
+  color: #fff;
+}
+
+/* ================================
+   PANEL SELECTION CARDS
+================================ */
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+/* PERFORMANCE MICRO FIXES */
+.panel-card{
+ will-change: transform;
+}
+.panel-card {
+  padding: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  background: #f9fafb;
+  transition: all 0.25s ease;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.panel-card:hover{
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  border-color: #0f766e;
+  transform: translateY(-2px);
+}
+
+.panel-card.active {
+  border-color: #0f766e;
+  background: #ecfeff;
+  box-shadow: 0 0 10px rgba(15,118,110,0.3);
+	transform: translateY(-3px) scale(1.02);
+
+}
+
+.panel-card.selected{
+  border:3px solid #00897b;
+  background:#e0f2f1;
+}
+
+.panel-card h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.panel-card p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #555;
+}
+
+.locked .panel-card{
+  opacity:.6;
+  pointer-events:none;
+}
+
+/* ================================
+   5. OPTIONS / UPGRADE BOXES
+================================ */
+
+.option {
+  margin-top: 15px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+}
+
+/* ================================
+   6. COST TABLE
+================================ */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+table tr td:nth-child(2) {
+		text-align:center;
+		}
+td {
+    border: 1px solid #d1d5db;
+    padding: 10px; 
+		font-size: 14px;
+		}
+		
+th {
+	border: 1px solid #d1d5db;
+  background: #f1f5f9;
+	font-weight: bold;
+  font-size: 20px; 
+}
+.total{
+  font-size:24px;
+  color:var(--primary);
+	background: #f1f5f9;
+}
+
+/* ================================
+   7. SIGNATURE SECTION
+================================ */
+
+#signatureSection{
+  border:2px solid var(--primary);
+  background:#f8fffe;
+}
+
+#signaturePad {
+  border: 1px solid #000;
+  width: 100%;
+  height: 150px;
+	background:#fff;
+  touch-action: none;
+	cursor:crosshair;
+}
+
+.signature {
+  margin-top: 40px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.signature div {
+  width: 45%;
+  border-top: 1px solid #000;
+  padding-top: 5px;
+}
+.clearSignature {
+  margin: 0;
+}
+
+p#signatureNotice		{
+	color:#b91c1c;
+	font-size:13px; 
+	margin:0; 
+	float:right;
+	}
+
+/* ================================
+   8. ACTION BUTTONS
+================================ */
+
+button {
+  padding: 10px 20px;
+  background: #0f766e;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #115e59;
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/*===== SCROLLMENU =====*/
+div.scrollmenu {
+  background-color: transparent;
+  padding: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+#menuSection{
+  background:#fff;
+  border-top:1px solid var(--border-soft);
+  padding:10px 0;
+}
+
+/* ================================
+   9. APP HEADER (TOP NAV)
+================================ */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1.5rem;
+
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(3px);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.brand {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.8rem;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ================================
+   10. THEME TOGGLE SWITCH
+================================ */
+
+.switch {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  display: inline-block;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #767676;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #0f766e;
+}
+
+input:checked + .slider::before {
+  transform: translateX(22px);
+}
+
+/* ================================
+   11. PRINT CHECKBOX VISUAL LOCK
+================================ */
+
+.print-mark {
+  display: none;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+/* ================================
+   12. PRINT MODE
+================================ */
+
+@media print {
+
+ .app-header,
+ .no-print,
+ .actionBar,
+	button {	
+		display:none !important;
+ }
+
+  body {
+		margin:12mm;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .container {
+    box-shadow: none !important;
+    margin: 0 !important;
+    border: 1px solid #000;
+    padding: 20px;
+  }
+
+  h2 {
+    color: #000;
+  }
+	
+  select {
+    border: none !important;
+    padding: 0 !important;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent !important;
+    color: #000 !important;
+    pointer-events: none;
+  }
+
+  input[type="checkbox"] {
+    display: none !important;
+  }
+
+  .print-mark {
+    display: inline !important;
+    font-size: 16px;
+  }
+
+  #signaturePad {
+    border: none !important;
+  }
+}
+
+.actionBar {
+  display: none !important;
+}
+
+/* ================================
+   13. RESPONSIVE 
+================================ */
+
+@media (max-width: 768px) {
+
+  .header-container {
+    flex-direction: column;
+  }
+
+  .header-right {
+    text-align: left;
+    margin-top: 15px;
+  }
+
+}
+
+/* ================================
+   DELETE ROW with ANIMATION
+================================ */
+
+.deleteRow {
+  animation: rowDelete 0.35s ease forwards;
+}
+
+@keyframes rowDelete {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-40px);
+    height: 0;
+  }
+}
+
+@keyframes fadeDelete {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+}
+
+.removing {
+  animation: fadeDelete 0.35s forwards;
+}
+
+/* ================================
+   14. TOAST
+================================ */
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #111;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity .3s ease;
+  z-index: 5000;
+}
+.toast.show {
+  opacity: 1;
+}
+
+
+/* ================================
+   DASHBOARD MODAL
+================================ */
+
+.dashboard-modal{
+position:fixed;
+top:80px;
+left:0;
+width:90%;
+height:80%;
+background:white;
+overflow:auto;
+padding:20px;
+z-index:999;
+display:none;
+}
+
+.dashboard-stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:15px;
+margin-bottom:40px;
+}
+
+.stat-card{
+background:#f4f4f4;
+padding:15px;
+border-radius:10px;
+text-align:center;
+}
+
+.stat-card h3{
+margin-bottom:8px;
+font-size:14px;
+}
+
+.stat-card p{
+font-size:22px;
+font-weight:bold;
+}
+
+.dashboard-table{
+width:100%;
+border-collapse:collapse;
+}
+
+.dashboard-table th,
+.dashboard-table td{
+border-bottom:1px solid #ddd;
+padding:8px;
+text-align:left;
+}
+
+.dashboard-table button{
+padding:6px 10px;
+}
+
+/* ================================
+   NEW VERSION NOTIFICATION UPDATE
+	================================ */
+
+.updateNotice{
+  position:fixed;
+  top:10px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#0f766e;
+  color:white;
+  padding:10px 18px;
+  border-radius:8px;
+  display:none;
+  z-index:9999;
+}
+
+</style>
+
+</head>
+
+<body>
+
+	<header id="appHeader" class="app-header">
+  <h1 class="brand">Panel Estimate Pro</h1>
+  <div class="theme-toggle">
+    <label for="themeSwitch">Dark Mode</label>
+    <label class="switch">
+      <input type="checkbox" id="themeSwitch" aria-label="Toggle dark mode">
+      <span class="slider round"></span>
+    </label>
+  </div>
+	</header>
+	
+
+<main id="estimateContainer" class="container">
+	
+	<h2 class="document-title">Electrical Estimate</h2>
+	
+<form id="estimateForm">
+
+<!-- PRINT HEADER -->
+<section id="companySection" class="header">
+
+  <div class="header-container">
+		
+    <!-- LEFT -->
+    <div class="header-left">
+      <div>
+        <label for="company">Company</label>	<br>
+        <input type="text" id="companyName" 
+								name="companyName" 
+								required />
+      </div>
+
+      <div>
+        <label for="license">License</label>		<br>
+        <input type="number" id="licenseNumber" 
+									name="licenseNumber" 
+									required />
+      </div>
+			
+      <div>
+        <label for="phone">Phone</label>	<br>
+				<input type="tel"
+       						id="phone"
+       						name="phone"
+       						pattern="[0-9()+\-\s]{7,}"
+       						required> 
+      </div>
+
+      <div>
+        <label for="email">Email</label>	<br>
+        <input type="email" id="companyEmail" 
+									name="companyEmail" 
+									required />
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="header-right">
+
+      <div class="meta-block">
+        <div>
+          <strong>Estimate #:</strong>
+          <span id="estimateNumber"></span>
+        </div>
+
+        <div>
+          <strong>Date:</strong>
+          <input type="date" id="estimateDate">
+       	</div>
+      </div>
+
+      <div id="statusBadge" class="statusBadge no-print">
+        DRAFT
+      </div>
+
+      <div id="qrContainer" class="qr-box"></div>
+
+    </div>
+
+  </div>
+
+</section><!-- End Header -->
+
+<!-- CLIENT -->
+<section id="clientSection">
+<h2>Client Information</h2>
+<label>Client Name: </label><input id="clientName"><br>
+
+<label>Address:</label>
+<br>
+<input id="street" placeholder="Street Address"><br>
+
+<input id="city" placeholder="City">
+
+<select id="projectState">
+	<option value="">State</option>
+  <option value="PR">PR</option>
+  <option value="PA">PA</option>
+  <option value="FL">FL</option>
+  <option value="CA">CA</option>
+</select>
+
+<input id="zip" placeholder="ZIP">
+	
+<br><br>
+<label>Phone: </label>
+<input type="tel"
+       id="clientPhone"
+       pattern="[0-9()+\-\s]{7,}">
+			
+<label>Email: </label>
+<input id="clientEmail">
+	
+</section>
+
+<!-- SERVICE -->
+<section id="serviceSection">
+<h2>Service Selection</h2>
+<div class="panel-grid">
+
+  <div class="panel-card" data-value="100">
+    <h3>100 Amp</h3>
+    <p>Small Homes</p>
+  </div>
+
+  <div class="panel-card" data-value="150">
+    <h3>150 Amp</h3>
+    <p>Mid-Size Homes</p>
+  </div>
+
+  <div class="panel-card" data-value="200">
+    <h3>200 Amp</h3>
+    <p>Large Homes / HVAC</p>
+  </div>
+
+</div>
+
+<input type="hidden" id="serviceSize">
+<p><strong>Scope of Work:</strong> <br>
+	Remove Federal Pacific panel and install NEC-compliant load distribution center.</p>
+</section>
+
+<!-- OPTIONS -->
+<section id="upgradeSection">
+<h2>Optional Code Upgrades</h2>
+
+<div class="option">
+<input type="checkbox" id="grounding">
+Grounding & Bonding Upgrade (NEC 250)
+
+</div>
+
+<div class="option">
+<input type="checkbox" id="surge">
+Whole-House Surge Protection (NEC 230.67)
+
+</div>
+
+<div class="option">
+<input type="checkbox" id="serviceEntrance">
+Service Entrance & Meter Replacement (NEC 230.70)
+
+</div>
+</section>
+
+<!-- COST TABLE -->
+<section id="costSection">
+<h2>Cost Breakdown</h2>
+
+<table>
+<tr><th>Description</th><th>Amount</th></tr>
+<tr><td>Permits</td><td id="permitsCost">$0.00</td></tr>
+<tr><td>Materials</td><td id="materialsCost">$0.00</td></tr>
+<tr><td>Labor</td><td id="laborCost">$0.00</td></tr>
+<tr><td>Grounding</td><td id="groundingCost">$0.00</td></tr>
+<tr><td>Surge Protection</td><td id="surgeCost">$0.00</td></tr>
+<tr><td>Service Entrance</td><td id="serviceEntranceCost">$0.00</td></tr>
+
+<tr class="total"><td class="total">Total Project Cost</td><td id="total" class="total">$0.00</td></tr>
+</table>
+</section>
+
+<!-- SIGNATURE -->
+<section id="signatureSection">
+<h2>Client Authorization Signature</h2>
+
+<canvas id="signaturePad" class="signature-pad"></canvas>
+<p id="signatureNotice" class="no-print">
+Select panel size to enable signature.
+</p>
+<button type="button"
+				 id="clearSignatureBtn"
+        class="no-print clearSignature"
+        onclick="clearSignature()">
+  Clear Signature
+</button>
+ 
+<p class="sectionHint">
+	<input type="checkbox" id="clientAccept">
+	Signature and confirms approval of estimate and scope of work.
+</p>
+
+<div class="signature">
+<div>Client Signature</div>
+<div>Date: <input type="date" style="width: 45%;" id="signatureDate"></div>
+</div>
+
+<p style="font-size:12px;color:#555;">
+This estimate becomes binding upon client signature.  
+Work performed per NEC and Puerto Rico AHJ requirements. 
+Panel size selected based on contractor evaluation and/or separate load calculation if required.
+Customer acknowledges future load additions may require service upgrade.</p>
+
+<input type="hidden" id="estimateHash">
+</section>
+
+<button type="button" 
+			id="clearEstimateBtn" 
+			class="no-print" 
+			onclick="clearEstimate()">
+  Clear Estimate
+</button>
+
+<button type="button" 
+				class="no-print" 
+				onclick="newEstimate()">
+	New Estimate
+</button>
+
+</form>
+
+</main><!-- END container -->
+
+<!-- ACTIONS BUTTONS -->
+<section id="menuSection">
+<div class="scrollmenu">
+
+<button type="button" 
+			id="printBtn" 
+			class="no-print" 
+			onclick="prepareAndPrint()" 
+			disabled>
+  Print
+</button>
+
+<button type="button" 
+			id="saveBtn" 
+			class="no-print" 
+			onclick="saveEstimate()"
+			disabled>
+  
+<span class="material-icons">save</span>
+Save
+</button>
+
+<button type="button" 
+			id="emailEstimateBtn" 
+			class="no-print" 
+			onclick="emailEstimate()" 
+			disabled>
+  
+<span class="material-icons">email</span>
+Email
+</button>
+
+ <button type="button"
+				id="dashboard"
+        class="no-print"
+			 onclick="openDashboard()">
+<span class="material-icons">dashboard</span>
+Dashboard
+</button>
+
+</div>
+
+<div id="dashboardModal" class="dashboard-modal">
+
+<h2>Contractor Dashboard</h2>
+
+<input id="dashboardSearch" placeholder="Search client">
+
+<div id="dashboardStats"></div>
+
+<table id="dashboardTable">
+
+<thead>
+<tr>
+<th>Estimate</th>
+<th>Date</th>
+<th>Client</th>
+<th>Total</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+<button onclick="closeDashboard()">Close</button>
+
+</div>
+</section>
+
+
+<div id="toast" class="toast"></div>
+
+
+<div id="updateNotice" class="updateNotice no-print">
+  New version available
+  <button onclick="updateApp()">Update</button>
+</div>
+
+
+
+<script>
+/* =====================================================
+   PANEL ESTIMATE PRO
+   Electrical Panel Upgrade Estimate System
+
+   Features:
+   ✔ Estimate calculation
+   ✔ Digital signature capture
+   ✔ QR code estimate verification
+   ✔ PDF export
+   ✔ Offline support (PWA ready)
+   ✔ Mobile optimized for field electricians
+
+   Author: Marcos Duprey
+   Version: 1.0
+===================================================== */
+
+/* =========================================================
+   SCRIPT INDEX
+   ---------------------------------------------------------
+   1. DOM CACHE
+   2. GLOBAL STATE
+   3. CONFIGURATION (Pricing / Defaults)
+   4. UTILITY FUNCTIONS
+   5. ESTIMATE NUMBER SYSTEM
+   6. PRICING ENGINE
+   7. SIGNATURE ENGINE
+   8. UI STATE MANAGEMENT
+   9. DOCUMENT LOCK SYSTEM
+   10. QR SECURITY SYSTEM
+   11. LOCAL STORAGE SYSTEM
+   12. DRAFT / AUTOSAVE SYSTEM
+   13. PRINT + PDF GENERATION
+   14. EMAIL SYSTEM
+   15. INITIALIZATION
+========================================================= */
+	
+/* =====================================================
+   1. DOM CACHE
+   -----------------------------------------------------
+   Cache DOM elements for performance and readability.
+	===================================================== */
+
+const form = document.getElementById("estimateForm");
+
+const serviceSize = document.getElementById("serviceSize");
+const permitsCost = document.getElementById("permitsCost");
+const materialsCost = document.getElementById("materialsCost");
+const laborCost = document.getElementById("laborCost");
+
+const groundingCost = document.getElementById("groundingCost");
+const surgeCost = document.getElementById("surgeCost");
+const serviceEntranceCost = document.getElementById("serviceEntranceCost");
+
+const totalField = document.getElementById("total");
+
+const grounding = document.getElementById("grounding");
+const surge = document.getElementById("surge");
+const serviceEntrance = document.getElementById("serviceEntrance");
+
+const signatureNotice = document.getElementById("signatureNotice");
+const clientAccept = document.getElementById("clientAccept");
+
+const printBtn = document.getElementById("printBtn");
+const saveBtn = document.getElementById("saveBtn");
+const emailBtn = document.getElementById("emailEstimateBtn");
+
+const statusBadge = document.getElementById("statusBadge");
+
+const canvas = document.getElementById("signaturePad");
+const ctx = canvas.getContext("2d");
+	
+/* =====================================================
+   2. GLOBAL STATE
+   -----------------------------------------------------
+   Runtime variables used across the application
+===================================================== */
+
+function detectUserState(){
+
+/*
+Priority order
+1 — Company profile state
+2 — Browser timezone
+3 — Default PR
+*/
+
+const profile = getCompanyProfile();
+
+if(profile.state){
+return profile.state;
+}
+
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+if(tz.includes("Puerto_Rico")) return "PR";
+if(tz.includes("New_York")) return "PA";
+if(tz.includes("Chicago")) return "FL";
+if(tz.includes("Los_Angeles")) return "CA";
+
+return "US";
+
+}
+
+let estimateLocked = false
+let estimateSigned = false
+let estimateNumber = null
+let signatureData = null
+
+
+/* -- Business Database Structure -- */
+const BUSINESS_DB_KEY = "contractorDB";
+
+function getDB(){
+
+let db = JSON.parse(localStorage.getItem(BUSINESS_DB_KEY));
+
+if(!db){
+
+db = {
+
+customers:[],
+estimates:[],
+jobs:[],
+invoices:[],
+payments:[]
+
+};
+
+localStorage.setItem(BUSINESS_DB_KEY,JSON.stringify(db));
+
+}
+
+return db;
+
+}
+
+function saveDB(db){
+
+localStorage.setItem(BUSINESS_DB_KEY,JSON.stringify(db));
+
+}
+
+
+/* -- Customer Management System -- */
+function addCustomer(name,phone,address){
+
+const db = getDB();
+
+const customer = {
+
+id: Date.now(),
+name,
+phone,
+address,
+created: new Date().toISOString()
+
+};
+
+db.customers.push(customer);
+
+saveDB(db);
+
+return customer.id;
+
+}
+
+
+function renderCustomers(){
+
+const db = getDB();
+
+const list = document.getElementById("customerList");
+
+list.innerHTML = "";
+
+db.customers.forEach(c=>{
+
+const li = document.createElement("li");
+
+li.innerText = c.name + " - " + c.phone;
+
+list.appendChild(li);
+
+});
+
+}
+
+
+/* ==========================================================
+   3. CONFIGURATION DATABASE PRICING $
+   ----------------------------------------------------------
+   Defines pricing rules for:
+
+   • permits
+   • materials
+   • labor
+   • optional upgrades
+
+   Editing these values automatically updates all estimates.
+   ========================================================== */
+	/* ================= CONFIG MATERIALS & LABOR ================= */
+
+const CONFIG = {
+  permits: 250,
+  laborRate: 120,
+  markup: 1.3,
+  serviceDB: {
+    100: { material: 700, laborHours: 6 },
+    150: { material: 900, laborHours: 8 },
+    200: { material: 1200, laborHours: 10 }
+  },
+  upgrades: {
+    grounding: 450,
+    surge: 350,
+    serviceEntrance: 1800
+  }
+};
+
+/* ==========================================================
+   4. APPLICATION STATE
+   ----------------------------------------------------------
+   Tracks runtime status of the estimate including:
+
+   • signature presence
+   • document lock state
+   • tamper detection
+   • estimate identifier
+   ========================================================== */
+
+const APP_STATE = {
+  signed: false,
+  locked: false,
+  tampered: false,
+  signaturePresent: false,
+  estimateNumber: null
+};
+
+/* ===== STATE ===== */
+let drawing = false;
+let signatureEnabled = false;
+
+
+/* ==========================================================
+   5. UTILITY FUNCTIONS
+   ----------------------------------------------------------
+   Helper utilities used throughout the application.
+   ========================================================== */
+
+function money(n){
+  return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
+}
+
+/* ==========================================================
+   5. ESTIMATE NUMBER SYSTEM
+   ----------------------------------------------------------
+   Generates unique estimate numbers.
+
+   Format:
+   QTE-YYMMDD-###
+   Example:
+   QTE-240315-001
+
+   Stored in localStorage to prevent duplicates.
+   ========================================================== */
+
+function generateEstimateNumber(){
+
+const today = new Date();
+
+const datePart =
+today.getFullYear().toString().slice(-2) +
+String(today.getMonth()+1).padStart(2,"0") +
+String(today.getDate()).padStart(2,"0");
+
+let registry = JSON.parse(localStorage.getItem("dailyEstimateRegistry")) || {};
+
+const dateKey = today.toISOString().split("T")[0];
+
+if(!registry[dateKey]){
+registry[dateKey] = [];
+}
+
+let number = 1;
+
+while(registry[dateKey].includes(number)){
+number++;
+}
+
+registry[dateKey].push(number);
+
+localStorage.setItem("dailyEstimateRegistry",JSON.stringify(registry));
+
+document.getElementById("estimateNumber").textContent =
+`QTE-${datePart}-${String(number).padStart(3,'0')}`;
+
+}
+
+/* ================= NEW ESTIMATE BTN ================= */
+
+function newEstimate(){
+
+  localStorage.removeItem("currentEstimateNumber");
+
+  generateEstimateNumber();
+
+}
+
+/* ==========================================================
+   6. PRICING ENGINE
+   ----------------------------------------------------------
+   Calculates project cost based on:
+
+   • selected panel size
+   • material markup
+   • labor hours
+   • NEC upgrade options
+	
+		API to detects prices on local electrical stores, HomeDepot, GrayBar, or compatibles stores.
+	 It must dects material prices from stores on PR, FL, PA, CA
+	========================================================== */
+	
+function calculatePricing(){
+
+  if(!serviceSize.value){
+    materialsCost.textContent = money(0);
+    laborCost.textContent = money(0);
+    permitsCost.textContent = money(0);
+    totalField.textContent = money(0);
+    return;
+  }
+
+  const data = CONFIG.serviceDB[serviceSize.value];
+
+  const material = data.material * CONFIG.markup;
+  const labor = data.laborHours * CONFIG.laborRate;
+
+  materialsCost.textContent = money(material);
+  laborCost.textContent = money(labor);
+  permitsCost.textContent = money(CONFIG.permits);
+
+  calculateTotal();
+}
+
+function calculateTotal(){
+
+  const material = parseFloat(materialsCost.textContent.replace(/[^0-9.]/g,"")) || 0;
+  const labor = parseFloat(laborCost.textContent.replace(/[^0-9.]/g,"")) || 0;
+
+  const upgradeTotal =
+    (grounding.checked ? CONFIG.upgrades.grounding : 0) +
+    (surge.checked ? CONFIG.upgrades.surge : 0) +
+    (serviceEntrance.checked ? CONFIG.upgrades.serviceEntrance : 0);
+
+  groundingCost.textContent = money(grounding.checked ? CONFIG.upgrades.grounding : 0);
+  surgeCost.textContent = money(surge.checked ? CONFIG.upgrades.surge : 0);
+  serviceEntranceCost.textContent = money(serviceEntrance.checked ? CONFIG.upgrades.serviceEntrance : 0);
+
+  totalField.textContent = money(
+    material + labor + CONFIG.permits + upgradeTotal
+  );
+}
+
+/* ==========================================================
+   7. SIGNATURE SYSTEM
+   ----------------------------------------------------------
+   Handles:
+
+   • canvas resizing
+   • signature drawing
+   • signature clearing
+   • signature detection
+
+   Signature is required before estimate approval.
+   ========================================================== */
+	 
+let hasSignature = false;   
+function resizeCanvas(){
+
+ const data = canvas.toDataURL();
+
+ canvas.width = canvas.offsetWidth;
+ canvas.height = canvas.offsetHeight;
+
+ const img = new Image();
+ img.src = data;
+
+ img.onload = ()=>{
+   ctx.drawImage(img,0,0);
+ };
+
+}
+
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+function startDraw(e){
+  if(!signatureEnabled) return;
+
+  e.preventDefault();
+  drawing = true;
+
+  document.getElementById("signatureDate").value =
+    new Date().toISOString().split("T")[0];
+
+  const rect = canvas.getBoundingClientRect();
+  const point = e.touches ? e.touches[0] : e;
+
+  ctx.beginPath();
+  ctx.moveTo(point.clientX - rect.left, point.clientY - rect.top);
+}
+
+function draw(e){
+  if(!drawing) return;
+  e.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const point = e.touches ? e.touches[0] : e;
+
+  ctx.lineTo(point.clientX - rect.left, point.clientY - rect.top);
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function endDraw(){
+  drawing = false;
+  hasSignature = true;
+  APP_STATE.signaturePresent = true;
+  updateUIState();
+}
+
+function clearSignature(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  hasSignature = false;
+  APP_STATE.signaturePresent = false;
+  updateUIState();
+}
+
+
+/* ==========================================================
+   8. UI STATE MANAGEMENT
+   ----------------------------------------------------------
+   Controls enabling/disabling of:
+
+   • Print button
+   • Email button
+   • Accept checkbox
+   • Status badge
+	
+		Enables or disables buttons depending on signature 
+		presence and approval checkbox.   ========================================================== */
+
+function updateSignatureLock(){
+
+  if(!serviceSize.value){
+
+    signatureEnabled = false;
+    canvas.style.pointerEvents = "none";
+    canvas.style.opacity = "0.4";
+
+    hasSignature = false;
+    APP_STATE.signaturePresent = false;
+
+    document.getElementById("signatureDate").value = "";
+
+    updateUIState();
+
+  } else {
+
+    signatureEnabled = true;
+    canvas.style.pointerEvents = "auto";
+    canvas.style.opacity = "1";
+		
+  }
+
+}
+
+function updateUIState(){
+
+  const canFinalize = hasSignature && clientAccept.checked;
+
+  // Lock Accept until signature exists
+  clientAccept.disabled = !hasSignature;
+if(hasSignature){
+  document.body.classList.add("locked");
+}else{
+  document.body.classList.remove("locked");
+}
+  if(!hasSignature){
+    clientAccept.checked = false;
+  }
+
+  printBtn.disabled = !canFinalize;
+  emailBtn.disabled = !canFinalize;
+
+  if(canFinalize){
+    statusBadge.textContent = "SIGNED";
+    statusBadge.classList.remove("draft");
+    statusBadge.classList.add("signed");
+  } else {
+    statusBadge.textContent = "DRAFT";
+    statusBadge.classList.remove("signed");
+    statusBadge.classList.add("draft");
+  }
+
+}
+
+/* ==========================================================
+   9. DOCUMENT LOCK SYSTEM
+   ----------------------------------------------------------
+   Locks form fields after client signature
+   to prevent estimate tampering.
+
+   Unlocking removes QR verification.
+   ========================================================== */
+
+function lockDocument(lock) {
+
+  const elements = form.querySelectorAll("input, select, button, textarea");
+
+  elements.forEach(el => {
+
+    // Never disable Print or Email here (controlled separately)
+    if (el.id === "printBtn" || el.id === "emailEstimateBtn") return;
+
+    // Never disable the accept checkbox itself (so it can be unchecked if needed)
+    if (el.id === "clientAccept") return;
+
+    if (lock) {
+      el.setAttribute("disabled", "true");
+      el.style.opacity = "0.85";
+    } else {
+      el.removeAttribute("disabled");
+      el.style.opacity = "1";
+    }
+  });
+
+  // Lock signature pad drawing
+  if (lock) {
+    canvas.style.pointerEvents = "none";
+  } else {
+    updateSignatureLock();
+  }
+
+}	
+	
+/* ==========================================================
+   10. QR VERIFICATION SYSTEM
+   ----------------------------------------------------------
+   Generates a SHA-256 verification hash and embeds it
+   inside a QR code printed on the estimate.
+
+   Used to verify document authenticity.
+   ========================================================== */
+	
+async function generateQRCode(){
+
+  const qrContainer = document.getElementById("qrContainer");
+  qrContainer.innerHTML = "";
+
+  if(!hasSignature || !clientAccept.checked){
+    return;
+  }
+
+  const estimateNumber = document.getElementById("estimateNumber").textContent;
+  const total = totalField.textContent;
+  const client = document.getElementById("clientName").value;
+  const date = document.getElementById("estimateDate").value;
+
+  const rawData = `
+${estimateNumber}|${client}|${total}|${date}|SIGNED
+  `.trim();
+
+  const fullHash = await generateHash(rawData);
+
+  // Store full hash hidden
+  document.getElementById("estimateHash").value = fullHash;
+
+  // Show short visible hash (first 10 chars)
+  let shortHashEl = document.getElementById("visibleHash");
+
+  if(!shortHashEl){
+    shortHashEl = document.createElement("div");
+    shortHashEl.id = "visibleHash";
+    shortHashEl.style.fontSize = "11px";
+    shortHashEl.style.marginTop = "4px";
+    document.getElementById("qrContainer").appendChild(shortHashEl);
+  }
+
+  shortHashEl.innerHTML = "Verification ID: " + fullHash.substring(0,10).toUpperCase();
+
+  new QRCode(qrContainer, {
+    text: `
+Estimate: ${estimateNumber}
+Client: ${client}
+Total: ${total}
+Date: ${date}
+Verification: ${fullHash}
+    `.trim(),
+    width: 100,
+    height: 100
+  });
+
+}
+
+/* ==========================================================
+   11. TAMPER DETECTION
+   ----------------------------------------------------------
+   Recalculates the estimate hash and compares it with
+   the stored verification value.
+
+   If mismatch occurs:
+
+   • status becomes TAMPERED
+   • printing disabled
+   • emailing disabled
+   ========================================================== */
+	
+async function verifyIntegrity(){
+
+  if(!hasSignature || !clientAccept.checked){
+    return true;
+  }
+
+  const estimateNumber = document.getElementById("estimateNumber").textContent;
+  const total = totalField.textContent;
+  const client = document.getElementById("clientName").value;
+  const date = document.getElementById("estimateDate").value;
+
+  const rawData = `
+${estimateNumber}|${client}|${total}|${date}|SIGNED
+  `.trim();
+
+  const newHash = await generateHash(rawData);
+  const storedHash = document.getElementById("estimateHash").value;
+
+  if(newHash !== storedHash){
+
+    const badge = document.getElementById("statusBadge");
+
+    badge.textContent = "TAMPERED";
+    badge.style.background = "#b91c1c";
+    badge.style.color = "#fff";
+
+    printBtn.disabled = true;
+    emailBtn.disabled = true;
+
+    document.getElementById("qrContainer").innerHTML = "";
+
+    return false;
+  }
+
+  return true;
+}
+
+/* ==========================================================
+   12. PDF GENERATION
+   ----------------------------------------------------------
+   Converts the estimate container to a printable PDF
+   using html2canvas and jsPDF libraries.
+   ========================================================== */
+	
+async function generatePDF(){
+
+  const { jsPDF } = window.jspdf;
+
+  const element =
+    document.getElementById("estimateContainer");
+
+  const canvas =
+    await html2canvas(element,{scale:2});
+
+  const imgData =
+    canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF("p","mm","letter");
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+
+  const imgWidth = pageWidth - 20;
+  const imgHeight = canvas.height * imgWidth / canvas.width;
+
+  pdf.addImage(
+    imgData,
+    "PNG",
+    10,
+    10,
+    imgWidth,
+    imgHeight
+  );
+
+  const estimateNumber =
+    document.getElementById("estimateNumber").textContent;
+
+  pdf.save(`Estimate-${estimateNumber}.pdf`);
+
+}
+
+/* ==========================================================
+   13. ESTIMATE STORAGE SYSTEM
+   ----------------------------------------------------------
+   Saves signed estimates locally into localStorage database.
+
+   Data stored includes:
+
+   • estimate number
+   • client
+   • total
+   • verification hash
+   • timestamp
+   ========================================================== */
+
+/* ================= SAVE ESTIMATE ================= */
+
+function saveEstimate() {
+  const estimateNumber = document.getElementById("estimateNumber").textContent;
+
+  const estimateData = {
+    estimateNumber,
+    date: document.getElementById("estimateDate").value,
+    client: document.getElementById("clientName").value,
+    total: totalField.textContent,
+    hash: document.getElementById("estimateHash").value,
+    signed: true,
+    timestamp: Date.now()
+  };
+
+  let approved = JSON.parse(localStorage.getItem("approvedEstimates")) || [];
+
+  approved = approved.filter(e => e.estimateNumber !== estimateNumber);
+  approved.push(estimateData);
+
+  localStorage.setItem("approvedEstimates", JSON.stringify(approved));
+}
+
+
+/* ==========================================================
+   15. DRAFT SYSTEM AUTOSAVE
+   ----------------------------------------------------------
+   Automatically saves estimate progress every 10 seconds
+   to prevent data loss during field work.
+   ========================================================== */
+		
+function autoSaveDraft() {
+  const draft = {
+    serviceSize: serviceSize.value,
+    client: document.getElementById("clientName").value,
+    total: totalField.textContent
+  };
+
+  localStorage.setItem("draftEstimate", JSON.stringify(draft));
+}
+
+setInterval(autoSaveDraft, 10000);
+
+
+/* ==========================================================
+   16. TOAST NOTIFICATION SYSTEM
+   ----------------------------------------------------------
+   Displays temporary user messages for:
+
+   • errors
+   • warnings
+   • confirmations
+   ========================================================== */
+	
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
+function showUpdateAvailable(){
+  document
+    .getElementById("updateNotice")
+    .style.display="block";
+}
+
+/* ===== SIGNED MESSAGE TOAST 
+This allows the user to remove acceptance and edit again.
+================= */
+
+function signDocument(){
+
+  if(!hasSignature){
+    showToast("Signature required before approval.");
+    return;
+  }
+
+  APP_STATE.signed = true;
+
+  // lock interface
+  lockDocument(true);
+
+  // generate verification QR
+  generateQRCode();
+
+  updateUIState();
+
+  showToast("Estimate signed and locked.");
+
+}
+
+function unlockDocument(){
+
+  APP_STATE.signed = false;
+
+  lockDocument(false);
+
+  document.getElementById("qrContainer").innerHTML = "";
+  document.getElementById("estimateHash").value = "";
+
+  updateUIState();
+
+  showToast("Estimate unlocked.");
+
+}
+
+/* -- Convert Estimate → Job
+When client signs and accepts: 
+----------------------------------------- */
+function approveEstimate(estimateID){
+
+const db = getDB();
+
+const est = db.estimates.find(e=>e.id===estimateID);
+
+if(!est) return;
+
+est.status = "approved";
+
+const job = {
+
+id: Date.now(),
+estimateID: est.id,
+client: est.client,
+total: est.total,
+status:"scheduled"
+
+};
+
+db.jobs.push(job);
+
+saveDB(db);
+
+}
+
+/* -- Invoice Generator	
+Create an invoice automatically after approval.
+------------------–------------------------------------------ */
+function createInvoice(jobID){
+
+const db = getDB();
+
+const job = db.jobs.find(j=>j.id===jobID);
+
+if(!job) return;
+
+const invoice = {
+
+id: Date.now(),
+jobID: job.id,
+client: job.client,
+amount: job.total,
+paid:0,
+balance: job.total,
+date: new Date().toISOString()
+
+};
+
+db.invoices.push(invoice);
+
+saveDB(db);
+
+}
+
+/* -- Payment Tracking
+Record customer payments.
+---------------------------------- -- */
+function recordPayment(invoiceID,amount){
+
+const db = getDB();
+
+const invoice = db.invoices.find(i=>i.id===invoiceID);
+
+if(!invoice) return;
+
+invoice.paid += amount;
+
+invoice.balance -= amount;
+
+db.payments.push({
+
+id:Date.now(),
+invoiceID,
+amount,
+date:new Date().toISOString()
+
+});
+
+saveDB(db);
+
+}
+
+/* -- Job Tracking
+Track project status.
+------------------------ -- */
+function updateJobStatus(jobID,status){
+
+const db = getDB();
+
+const job = db.jobs.find(j=>j.id===jobID);
+
+if(job){
+
+job.status = status;
+
+saveDB(db);
+
+}
+
+}
+
+/* -- Revenue Analytics
+Add this to your dashboard stats.
+----------------------------------------- -- */
+function getBusinessStats(){
+
+const db = getDB();
+
+let revenue = 0;
+
+db.payments.forEach(p=>{
+revenue += p.amount;
+});
+
+return {
+
+customers: db.customers.length,
+estimates: db.estimates.length,
+jobs: db.jobs.length,
+revenue: revenue
+
+};
+
+}
+
+/* -- Customer History
+View all jobs for one client.
+-------------------------------- -- */
+function getCustomerJobs(name){
+
+const db = getDB();
+
+return db.jobs.filter(j=>j.client === name);
+
+}
+
+
+/* ==========================================================
+   17. EVENT LISTENERS
+   ----------------------------------------------------------
+   Handles user interaction including:
+
+   • panel selection
+   • checkbox changes
+   • signature drawing
+   • dashboard actions
+   ========================================================== */
+	
+		
+	
+/* ==========================================================
+   18. APPLICATION INITIALIZATION
+   ----------------------------------------------------------
+   Executes on page load and prepares:
+
+   • estimate number
+   • current date
+   • event listeners
+   • UI state
+   ========================================================== */
+	/* ================= INIT ================= */
+	
+function init(){
+	
+	setTodayDate();
+	
+  generateEstimateNumber();
+
+	serviceSize.addEventListener("change", () => {
+	clearSignature();   // 🔥 Reset signature if panel changes
+	calculatePricing();
+  updateSignatureLock();
+
+});
+
+  [grounding, surge, serviceEntrance]
+    .forEach(el => el.addEventListener("change", calculateTotal));
+
+clientAccept.addEventListener("change", () => {
+
+  if(clientAccept.checked){
+
+    if(!APP_STATE.signaturePresent){
+      alert("Client must sign before accepting the estimate.");
+      clientAccept.checked = false;
+      return;
+    }
+
+    signDocument();
+
+  } else {
+    unlockDocument();
+  }
+
+});
+
+  canvas.addEventListener("mousedown", startDraw);
+  canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mouseup", endDraw);
+
+  canvas.addEventListener("touchstart", startDraw);
+  canvas.addEventListener("touchmove", draw);
+  canvas.addEventListener("touchend", endDraw);
+
+  updateSignatureLock();
+  updateUIState();
+}
+
+[grounding, surge, serviceEntrance, clientAccept]
+  .forEach(el => el.addEventListener("change", updateCheckboxMarks));
+
+updateCheckboxMarks();
+
+init();
+
+const integrityFields = [
+  "clientName",
+  "estimateNumber",
+  "estimateDate",
+  "serviceSize"
+];
+
+integrityFields.forEach(id => {
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener("input", verifyIntegrity);
+    el.addEventListener("change", verifyIntegrity);
+  }
+	
+	const draft = JSON.parse(localStorage.getItem("draftEstimate"));
+if (draft) {
+  serviceSize.value = draft.serviceSize;
+  document.getElementById("clientName").value = draft.client;
+  calculatePricing();
+}
+});
+
+
+/* ================= CHECKBOX PRINT MARKS ================= */
+
+function updateCheckboxMarks(){
+
+  const checkboxes = ["grounding", "surge", "serviceEntrance", "clientAccept"];
+
+  checkboxes.forEach(id => {
+
+    const cb = document.getElementById(id);
+    const mark = document.getElementById("mark-" + id);
+
+    if(!cb || !mark) return;
+
+    if(cb.checked){
+      mark.textContent = "✔";
+      mark.style.color = "#16a34a";
+    } else {
+      mark.textContent = "✖";
+      mark.style.color = "#dc2626";
+    }
+
+  });
+
+}
+
+/* ================= ACTIONS print = email = clear ================= */
+/* ================= PRINT ================= */
+async function prepareAndPrint(){
+
+  if(!hasSignature || !clientAccept.checked){
+    alert("Client must sign and accept before printing.");
+    return;
+  }
+
+  const valid = await verifyIntegrity();
+
+  if(!valid){
+    alert("Document integrity compromised. Printing blocked.");
+    return;
+  }
+
+  window.print();
+}
+
+/* ================= EMAIL FUNCTION ================= */
+async function emailEstimate(){
+
+  if(!hasSignature || !clientAccept.checked){
+    showToast ("Client must sign and accept before emailing.");
+    return;
+  }
+
+   const valid = await verifyIntegrity();
+
+  if(!valid){
+    showToast ("Document integrity compromised. Email blocked.");
+    return;
+  }
+
+  await generatePDF();
+
+  const clientEmail = document.getElementById("clientEmail").value;
+  const estimateNumber = document.getElementById("estimateNumber").textContent;
+
+  const subject = encodeURIComponent(`Estimate ${estimateNumber}`);
+  const body = encodeURIComponent(
+`Please find attached your signed electrical estimate.
+
+Thank you.`
+  );
+
+  window.location.href = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
+}
+
+/* ================= CLEAR ESTIMATE ================= */
+function clearEstimate(){
+
+  if(hasSignature && clientAccept.checked){
+
+    const confirmClear = confirm(
+      "This estimate is SIGNED.\n\nClearing will permanently remove signature and verification.\n\nContinue?"
+    );
+
+    if(!confirmClear) return;
+  }
+
+  const confirmFinal = confirm("Are you sure you want to clear this estimate?");
+  if(!confirmFinal) return;
+
+  form.reset();
+
+  // Clear signature
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  hasSignature = false;
+
+  // Clear QR + hash
+  document.getElementById("qrContainer").innerHTML = "";
+  document.getElementById("estimateHash").value = "";
+
+  // Reset dates
+  setTodayDate();
+  document.getElementById("signatureDate").value = "";
+
+  // Generate fresh estimate number
+  generateEstimateNumber();
+
+  updateSignatureLock();
+  updateUIState();
+}
+
+
+/* ================= PANEL CARDS ================= */
+const panelCards = document.querySelectorAll(".panel-card");
+
+panelCards.forEach(card => {
+  card.addEventListener("click", () => {
+
+    panelCards.forEach(c => c.classList.remove("active"));
+    card.classList.add("active");
+
+    serviceSize.value = card.dataset.value;
+
+    // Trigger your original architecture
+    serviceSize.dispatchEvent(new Event("change"));
+
+  });
+});
+
+
+/* ================= HASH SYSTEM ================= */
+
+async function generateHash(data){
+
+  const encoder = new TextEncoder();
+  const encoded = encoder.encode(data);
+
+  const buffer = await crypto.subtle.digest("SHA-256", encoded);
+  const hashArray = Array.from(new Uint8Array(buffer));
+
+  const fullHash = hashArray
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return fullHash;
+}
+
+
+
+/* ================= AUTO DATE ================= */
+
+function setTodayDate(){
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("estimateDate").value = today;
+}
+
+
+/* ==========================================================
+   DASHBOARD SYSTEM
+   ----------------------------------------------------------
+   Displays saved estimates allowing stored records to:
+
+   • view
+   • open
+   • delete
+	
+  ========================================================== */
+	/* ========== RENDER SAVED ESTIMATE ========== */
+
+function renderSavedEstimates(){
+
+  const table = document.getElementById("dashboardTable");
+
+  table.innerHTML = "";
+
+  const estimates =
+    JSON.parse(localStorage.getItem("approvedEstimates")) || [];
+
+  if(estimates.length === 0){
+
+    table.innerHTML =
+      `<tr>
+        <td colspan="6">No saved estimates</td>
+      </tr>`;
+
+    return;
+
+  }
+
+  estimates
+    .sort((a,b)=>b.timestamp-a.timestamp)
+    .forEach(est => {
+		
+			const row = document.createElement("tr");
+			row.id = "row_" + est.estimateNumber;
+
+      row.innerHTML = `
+
+<td>${item.number}</td>
+
+<td>${item.date.split("T")[0]}</td>
+
+<td>${item.client}</td>
+
+<td>$${item.total}</td>
+
+<td>
+
+<select onchange="updateStatus(${index}, this.value)">
+
+<option ${item.status==="Draft"?"selected":""}>Draft</option>
+
+<option ${item.status==="Sent"?"selected":""}>Sent</option>
+
+<option ${item.status==="Approved"?"selected":""}>Approved</option>
+
+<option ${item.status==="Completed"?"selected":""}>Completed</option>
+
+</select>
+
+</td>
+
+<td>
+
+<button onclick="loadEstimate(${index})">
+Open
+</button>
+
+<button onclick="deleteEstimate(${index})">
+Delete
+</button>
+
+</td>
+
+`;
+
+      table.appendChild(row);
+
+    });
+
+}
+
+/* =====  OPEN AN ESTIMATE ===== */
+function loadEstimate(id){
+
+  const data =
+    JSON.parse(localStorage.getItem("estimate_" + id));
+
+  if(!data){
+    alert("Estimate not found.");
+    return;
+  }
+
+  document.getElementById("clientName").value = data.client;
+  document.getElementById("estimateDate").value = data.date;
+
+  totalField.textContent = data.total;
+
+  document.getElementById("estimateNumber").textContent =
+    data.estimateNumber;
+
+  closeDashboard();
+
+}
+
+/* =====  UPDATE STATUS ===== */
+function updateStatus(index,newStatus){
+
+const data = getEstimates();
+
+data[index].status = newStatus;
+
+saveEstimates(data);
+
+renderDashboard();
+
+}
+
+/* ================= DASHBOARD OPEN - CLOSE ================= */
+function openDashboard(){
+
+document.getElementById("dashboardModal").style.display = "block";
+
+updateDashboardStats();
+
+renderSavedEstimates();
+
+}
+
+function closeDashboard(){
+
+document.getElementById("dashboardModal").style.display = "none";
+
+}
+
+function renderDashboard(){
+
+const data = getEstimates();
+
+const tbody =
+document.querySelector("#dashboardTable tbody");
+
+tbody.innerHTML = "";
+
+let totalRevenue = 0;
+
+data.forEach((item,index)=>{
+
+totalRevenue += Number(item.total);
+
+const row = document.createElement("tr");
+
+row.innerHTML = `
+
+<td>${item.number}</td>
+
+<td>${item.date.split("T")[0]}</td>
+
+<td>${item.client}</td>
+
+<td>$${item.total}</td>
+
+<td>
+
+<button onclick="loadEstimate(${index})">
+Open
+</button>
+
+<button onclick="deleteEstimate(${index})">
+Delete
+</button>
+
+</td>
+
+`;
+
+tbody.appendChild(row);
+
+});
+
+document.getElementById("dashboardStats").innerHTML =
+
+`
+Total Estimates: ${data.length}<br>
+Total Value: $${totalRevenue.toFixed(2)}
+`;
+
+}
+
+function updateDashboardStats(){
+
+const database = JSON.parse(localStorage.getItem("approvedEstimates")) || [];
+
+let totalEstimates = database.length;
+let approvedJobs = database.length;
+let revenue = 0;
+
+database.forEach(job=>{
+ revenue += parseFloat(job.total || 0);
+});
+
+let conversion = 0;
+
+if(totalEstimates > 0){
+ conversion = Math.round((approvedJobs / totalEstimates) * 100);
+}
+
+document.getElementById("statEstimates").innerText = totalEstimates;
+document.getElementById("statApproved").innerText = approvedJobs;
+document.getElementById("statRevenue").innerText = "$" + revenue.toFixed(2);
+document.getElementById("statConversion").innerText = conversion + "%";
+
+}
+
+
+function loadEstimate(index){
+
+const data = getEstimates();
+
+const e = data[index];
+
+document.getElementById("clientName").value = e.client;
+document.getElementById("clientPhone").value = e.phone;
+document.getElementById("serviceSize").value = e.service;
+document.getElementById("total").value = e.total;
+
+calculateEstimate();
+
+closeDashboard();
+
+}
+
+
+function deleteEstimate(index){
+
+const database = JSON.parse(localStorage.getItem("approvedEstimates")) || [];
+
+database.splice(index,1);
+
+localStorage.setItem("approvedEstimates",JSON.stringify(database));
+
+renderSavedEstimates();
+
+updateDashboardStats();
+
+}
+
+
+/* ================= UPDATE NOTIFICATION ================= */
+function updateApp(){
+  window.location.reload();
+}
+
+</script>
+
+
+<script>
+
+/* ================= SERVICE WORKER ================= */
+
+if("serviceWorker" in navigator){
+
+window.addEventListener("load", () => {
+
+navigator.serviceWorker.register("service-worker.js")
+.then(reg => {
+
+console.log("Service Worker Registered");
+
+})
+.catch(err => {
+
+console.log("Service Worker Failed", err);
+
+});
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
