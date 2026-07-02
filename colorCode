@@ -1,214 +1,1007 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Electrical Panel Circuit Identifier</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>120/240V Circuit Identifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="manifest" href="manifest.json" />
     <style>
-        /* Styling for general layout, buttons, input fields, etc. */
-        
-				body { height: auto; padding: 0; margin: 0; font-family: Arial,  sans-serif; }
-        
-				* { padding: 0; margin: auto; box-sizing: border-box; }
-        
-				.sticky-container { position: sticky; top: 0; padding: 10px; height: 240px; 
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: auto;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+        }
+
+        /* ----- Sticky Header (overlay) ----- */
+        .sticky-container {
+            position: sticky;
+            top: 0;
+            padding: 15px;
+            height: 260px;
+            background-image: conic-gradient(at -25% 25%, #000 15%, #d32f2f 45%, #555 75%);
+            z-index: 100;
+            text-align: center;
+            transition: height 0.2s ease, padding 0.2s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+            border-bottom: 3px solid #111;
+        }
+
+        .circuit-color {
+            height: 120px;
+            width: 120px;
+            margin: 10px auto 0 auto;
+            border-radius: 50%;
+            border: 5px solid #fffafa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: black;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: height 0.2s ease, width 0.2s ease, font-size 0.2s ease;
+        }
+        .search-container {
+            position: relative;
+            width: 320px;
+            margin: 10px auto;
+        }
+
+        .searchInput {
+            width: 100%;
+            border-radius: 25px;
+            padding: 10px 85px 10px 40px;
+            font-size: 20px;
+            border: 2px solid #000;
+            outline: none;
+            caret-color: black;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .searchInput:focus {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            border-color: #333;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: #888;
+            pointer-events: none;
+        }
+
+        .voice-btn,
+        .reset-btn {
+            background: none;
+            cursor: pointer;
+            color: #555;
+            border: none;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .voice-btn {
+            right: 45px;
+            font-size: 20px;
+        }
+        .reset-btn {
+            right: 15px;
+            font-size: 20px;
+        }
+
+        .voice-btn.listening {
+            color: #7cfc00;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from {
+                transform: translateY(-50%) scale(1);
+            }
+            to {
+                transform: translateY(-50%) scale(1.2);
+            }
+        }
+
+        .error-message {
+            color: #ff3333;
+            font-size: 14px;
+            padding: 5px;
+            font-weight: bold;
+            min-height: 25px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        /* ----- Panel Container (Photo Background) ----- */
+        .panel-container {
+            background: #2b2b2b;
+            padding: 30px 20px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 30px #000, 0 10px 30px rgba(0, 0, 0, 0.8);
+            border: 8px solid #111;
+            position: relative;
+            overflow-x: auto;
+            margin: 20px;
+        }
+
+        .panel-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" /><path d="M10 10 L90 10 M10 30 L90 30 M10 50 L90 50 M10 70 L90 70 M10 90 L90 90 M10 10 L10 90 M30 10 L30 90 M50 10 L50 90 M70 10 L70 90 M90 10 L90 90" stroke="%23333" stroke-width="0.5" opacity="0.4"/></svg>');
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .panel-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.05), transparent 60%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        table {
+            position: relative;
+            z-index: 1;
+            border-collapse: separate;
+            border-spacing: 8px 6px;
+            width: 100%;
+						margin:0;
+        }
+        .table-head	{
+						padding: 20px;
+						background: transparent; 
+						border: none; 
+            align-items: center;
+						
+						color: #d32f2f;
+						font-size: 14px; 
+						text-transform: uppercase; 
+						letter-spacing: 2px;
+						}
+				tr {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+
+        /* ----- Breaker Styles ----- */
+        .breaker {
+            background: linear-gradient(145deg, #f0f0f0, #d0d0d0);
+            border-radius: 10px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.6);
+            padding: 15px 10px;
+            min-width: 150px;
+            position: relative;
+            border: 1px solid #888;
+            transition: all 0.2s ease;
+        }
+				.breaker-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .breaker::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            height: 35%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.7), transparent);
+            border-radius: 8px 8px 50% 50%;
+            pointer-events: none;
+        }
+
+        .row-l1 .breaker {
+           background: linear-gradient(145deg, #f4f4f4, #d4d4d4);
+        }
+
+        .row-l2 .breaker {
+            background: linear-gradient(145deg, #fce4e4, #f8bbd0);
+        }
 				
-				background-image: conic-gradient(at -25% 25%, red 10%, yellow 30%, #1e90ff 50%);
-    z-index: 2; }
-		
-				#circuit-color { height: 40px; width: 40px; padding: 50px; border-radius: 50%; border: 10px solid black; display: flex; justify-content: center; align-items: center; font-size: 52px; color: black; background-color: white; }
-        #searchInput { width: 200px; border-radius: 5px; padding: 5px 45px 5px 45px; font-size: 28px; border: 1px solid lime; outline: none; caret-color: black; }
-        #searchInput:focus { box-shadow: 0 0 10px rgba(0, 128, 0, 0.6); border-color: #00a000; }
-        .error-message { color: red; font-size: 14px; padding: 5px; }
-        .voice-btn, .reset-btn, .clear-btn { background: none; cursor: pointer; color: #555; font-size: 28px; border: none; }
-        table { width: 100%; border-collapse: collapse; font-size: 24px; }
-        th, td { border: 1px solid black; padding: 10px; }
-        th { background-color: #000; color: white; }
+        .circuit-num {
+            font-weight: bold;
+            font-size: 20px;
+            font-family: monospace;
+            color: #222;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 2px 8px;
+						transition: background 0.15s ease, color 0.15s ease;
+            user-select: none;
+        }
+						
+        .row-l1 .circuit-num:hover {
+            background: #000000;
+            color: #lime;
+        }
+
+        .row-l2 .circuit-num:hover {
+            background: #d32f2f;
+            color: #ffffff;
+        }
+
+        .terminal-screw {
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 30% 30%, #f0f0f0, #888);
+            border-radius: 50%;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            flex-shrink: 0;
+        }
+
+        .terminal-screw::after {
+            content: '';
+            display: block;
+            width: 12px;
+            height: 2px;
+            background: #333;
+            margin: 9px auto 0;
+            transform: rotate(45deg);
+        }
+
+        .breaker-middle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin: 5px 0;
+        }
+
+        .toggle-switch {
+            width: 28px;
+            height: 52px;
+            background: radial-gradient(circle at 30% 20%, #444, #111);
+            border-radius: 4px;
+            box-shadow: inset 0 -4px 0 #000, 0 4px 8px rgba(0, 0, 0, 0.6);
+            border: 1px solid #222;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            display: block;
+            width: 18px;
+            height: 10px;
+            background: #000000;
+            border-top:2px solid #ff4500;
+						margin: 6px auto 0;
+            border-radius: 2px 2px 0 0;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-switch:hover {
+            filter: brightness(1.2);
+        }
+
+        .toggle-switch.on {
+            transform: rotate(8deg);
+        }
+        .toggle-switch.off {
+            transform: rotate(-8deg);
+        }
+
+        /* ----- NEW: Ampacity Selector (replaces .amp-rating) ----- */
+        .amp-select {
+            font-size: 13px;
+            font-weight: bold;
+            padding: 3px 4px;
+            border-radius: 5px;
+            border: 2px solid #444;
+            font-family: monospace;
+            cursor: pointer;
+            width: 52px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s, border-color 0.2s;
+            appearance: auto;
+            background-color: #e8e8e8;
+            color: #000;
+            flex-shrink: 0;
+        }
+
+        /* Ampacity Color Classes */
+        .amp-select.amp-15 {
+            background-color: #000000;
+            border-color: #333;
+            color: #ffffff;
+        }
+        .amp-select.amp-20 {
+            background-color: #ff0000;
+            border-color: #cc0000;
+            color: #ffffff;
+        }
+        .amp-select.amp-30 {
+            background-color: #daa520;
+            border-color: #8b4513;
+            color: #ffffff;
+        }
+        .amp-select.amp-40 {
+            background-color: #ff8c00;
+            border-color: #e67300;
+            color: #ffffff;
+        }
+        .amp-select.amp-50 {
+            background-color: #1e90ff;
+            border-color: #000080;
+            color: #ffffff;
+        }
+        .amp-select.amp-60 {
+            background-color: #008080;
+            border-color: #006400;
+            color: #ffffff;
+        }
+
+        .breaker-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .test-btn {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #4caf50, #2e7d32);
+            box-shadow: inset 0 -2px 0 #1b5e20, 0 2px 4px rgba(0, 0, 0, 0.4);
+            border: 1px solid #1b5e20;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .test-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .test-btn.red {
+            background: radial-gradient(circle at 30% 30%, #f44336, #c62828);
+            box-shadow: inset 0 -2px 0 #b71c1c, 0 2px 4px rgba(0, 0, 0, 0.4);
+            border-color: #b71c1c;
+        }
+
+        .label-input {
+            flex-grow: 1;
+            min-width: 0;
+            margin: 0 6px;
+            padding: 6px 8px;
+            border: 0.5px solid #999;
+            border-radius: 3px;
+            background: #fff;
+            font-size: 16px;
+            text-align: center;
+            font-family: monospace;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .label-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+
+        /* ----- Handle Tr esie (Middle Column) ----- */
+        .handle-tie {
+            background: linear-gradient(to right, #d0d0d0, #e8e8e8, #d0d0d0);
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 10px 0;
+            min-width: 60px;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            text-transform: uppercase;
+            font-size: 18px;
+            border: 1px solid #aaa;
+            border-left: none;
+            border-right: none;
+            transition: all 0.2s ease;
+        }
+
+        .row-l1 .handle-tie {
+            background: linear-gradient(to bottom, #888, #444);
+            color: white;
+            border-color: #222;
+        }
+
+        .row-l2 .handle-tie {
+            background: linear-gradient(to bottom, #d32f2f, #b71c1c);
+            color: white;
+            border-color: #8b0000;
+        }
+
+        /* ----- Highlight for searched circuit ----- */
+        .breaker.voice-hover-active {
+            box-shadow: 0 0 20px #7b68ee, 0 0 40px #7b68ee, inset 0 0 20px rgba(124, 252, 0, 0.3);
+            border-color: #9a4dff;
+						opacity:0.8;
+            transform: scale(1.02);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        /* ----- Responsive Design ----- */
+        @media (max-height: 580px) {
+            .sticky-container {
+                height: 180px;
+                padding: 8px;
+            }
+            .circuit-color {
+                height: 62px;
+                width: 62px;
+                font-size: 32px;
+                border-width: 3px;
+                margin-bottom: 2px;
+            }
+            h1 {
+                font-size: 16px !important;
+                margin-bottom: 2px;
+            }
+            .search-container {
+                margin: 4px auto;
+                width: 250px;
+            }
+            .searchInput {
+                font-size: 16px;
+                padding: 6px 60px 6px 30px;
+								text-transform: uppercase;
+            }
+            .breaker {
+                padding: 10px 6px;
+                min-width: 100px;
+            }
+            .circuit-num {
+                font-size: 16px;
+            }
+            .toggle-switch {
+                width: 20px;
+                height: 36px;
+            }
+            .toggle-switch::after {
+                width: 14px;
+                height: 8px;
+            }
+            .amp-select {
+                font-size: 11px;
+                width: 42px;
+                padding: 2px 3px;
+            }
+            .label-input {
+                font-size: 12px;
+                padding: 4px 6px;
+								text-transform: uppercase;
+            }
+            .handle-tie {
+                font-size: 14px;
+                min-width: 40px;
+                padding: 5px 0;
+            }
+            .breaker-bottom {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .terminal-screw {
+                width: 14px;
+                height: 14px;
+            }
+            .terminal-screw::after {
+                width: 8px;
+                height: 2px;
+                margin-top: 6px;
+            }
+            .test-btn {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .panel-container {
+                padding: 15px 10px;
+                margin: 10px;
+            }
+            table {
+                border-spacing: 4px 4px;
+            }
+            .breaker {
+                min-width: 80px;
+                padding: 8px 4px;
+            }						
+						.breaker-top,
+            .breaker-bottom {
+                flex-direction: row;
+                align-items: center;
+                gap: 4px;
+            }
+            .breaker-middle {
+                flex-direction: row;
+                gap: 4px;
+            }
+            /* FIXED: Ensure bottom row stays compact */
+            .breaker-bottom {
+                flex-wrap: nowrap;
+                justify-content: space-between;
+                gap: 3px;
+            }
+            .handle-tie {
+                min-width: 30px;
+                font-size:18px;
+								/*--writing-mode: vertical-lr;--*/
+                padding: 5px 2px;
+            }
+            .circuit-num {
+                font-size: 14px;
+            }
+            .toggle-switch {
+                width: 16px;
+                height: 28px;
+            }
+            .toggle-switch::after {
+                width: 10px;
+                height: 6px;
+            }
+            .label-input {
+                font-size: 11px;
+                padding: 3px 4px;
+                min-width: 40px;
+            }
+            .amp-select {
+                font-size: 10px;
+                width: 38px;
+                padding: 2px 2px;
+            }
+            .sticky-container {
+                height: 220px;
+                padding: 10px;
+            }
+            .search-container {
+                width: 90%;
+            }
+            .searchInput {
+                font-size: 16px;
+                padding: 8px 70px 8px 34px;
+            }
+            .circuit-color {
+                height: 80px;
+                width: 80px;
+                font-size: 24px;
+            }
+            h1 {
+                font-size: 18px !important;
+								margin-bottom:5px; 
+								color:white; 
+								text-shadow:1px 1px 4px rgba(0,0,0,0.8);
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="content">
-    <!-- Header and language selection -->
-    <div class="sticky-container">
-        <div id="circuit-color">0</div>
-        <h1>USA Circuit Color</h1>
+    <div class="content">
+        <!-- Sticky Header -->
+        <div class="sticky-container">
+            <div id="circuit-color" class="circuit-color">0</div>
+            <h1>
+              120/240V Circuit Identifier </h1>
 
-        <div class="search-container">
-            <button class="voice-btn" id="voice-search-btn" title="Voice Search" aria-label="Voice Search"><i class="fa fa-microphone"></i></button>
-           
-            <input type="number" id="searchInput" placeholder="Search..." aria label="Search by number">
-            <button class="reset-btn" id="reset" title="Reset">✖</button>
+            <div class="search-container">
+                <span class="search-icon"><i class="fa fa-search"></i></span>
+                <input type="number" id="searchInput" class="searchInput" placeholder="Circuit #" min="1" max="999" aria-label="Search by number" />
+                <button class="voice-btn" id="voice-search-btn" title="Voice Search" aria-label="Voice Search"><i class="fa fa-microphone"></i></button>
+                <button class="reset-btn" id="reset" title="Reset"><i class="fas fa-times-circle"></i></button>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+						
+						<table id="headTable">
+								<thead>
+                    <tr>
+                        <th class="table-head">Circuit</th>
+                        <th class="table-head">LINE</th>
+                        <th class="table-head">Circuit</th>
+                    </tr>
+                </thead>
+						</table>
+        </div><!--END sticky container-->
+
+        <!-- Breaker Panel -->
+        <div class="panel-container">
+            <table id="dataTable">
+                
+                <tbody id="tableBody"></tbody>
+            </table>
         </div>
-
-        <div id="error-message" class="error-message"></div>
-				
-				<!--
-				 <select id="languageSelect" aria-label="Select language">
-                <option value="en-US">English (US)</option>
-                <option value="es-ES">Spanish (Spain)</option>
-                <option value="fr-FR">French (France)</option>
-                <option value="de-DE">German (Germany)</option>
-                <!-- Add more languages as needed 
-            </select>
-				-->
     </div>
 
-    <!-- Data table -->
-    <table id="dataTable">
-        <thead>
-            <tr><th scope="col">Circuit</th><th scope="col">LINE</th><th scope="col">Circuit</th></tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
-</div>
+    <script>
+        // ====== Cached DOM ======
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+        const circuitColorDiv = document.getElementById('circuit-color');
+        const errorMessage = document.getElementById('error-message');
+        const voiceSearchBtn = document.getElementById('voice-search-btn');
+        const resetBtn = document.getElementById('reset');
+        const rowMap = new Map();
 
-<script>
-    // ====== Cached DOM Elements ======
-    const tableBody = document.getElementById('tableBody');
-    const searchInput = document.getElementById("searchInput");
-    const circuitColorDiv = document.getElementById("circuit-color");
-    const errorMessage = document.getElementById("error-message");
-    const voiceSearchBtn = document.getElementById('voice-search-btn');
-    const languageSelect = document.getElementById('languageSelect');
-    const rowMap = new Map();
+        // ====== Ampacity color mapping ======
+        const AMP_COLORS = {
+            '15': 'amp-15',
+            '20': 'amp-20',
+            '30': 'amp-30',
+            '40': 'amp-40',
+            '50': 'amp-50',
+            '60': 'amp-60'
+        };
 
-    // ====== Initialization ======
-    window.onload = initialize;
+        // ====== Init ======
+        window.onload = initialize;
 
-    function initialize() {
-        generateTable();            // Build the data table
-        setupEventListeners();      // Set up input, button, and click event listeners
-        initializeSpeechRecognition(); // Initialize speech recognition with language selection
-    }
-
-    // ====== Table Generation ======
-    function generateTable() {
-        const fragment = document.createDocumentFragment();
-        for (let i = 1; i <= 999; i += 2) {
-            const tr = document.createElement('tr');
-            const { trColor, textColor, lineText } = getRowStyle(i);
-
-            tr.style.backgroundColor = trColor;
-            tr.style.color = textColor;
-            tr.innerHTML = `<td>${i}</td><td>${lineText}</td><td>${i + 1}</td>`;
-            fragment.appendChild(tr);
-
-            rowMap.set(i, { element: tr, color: trColor });
-            rowMap.set(i + 1, { element: tr, color: trColor });
+        function initialize() {
+            generateTable();
+            setupEventListeners();
+            initializeSpeechRecognition();
+            loadLabelsFromStorage();
+            loadAmpSettings();
+            applyAmpColors();
         }
-        tableBody.appendChild(fragment);
-    }
 
-    // Determines row color and text based on the index
-    function getRowStyle(index) {
-        const rowIndex = Math.floor(index / 2) % 3;
-        const colors = [
-            { trColor: 'sienna', textColor: 'white', lineText: 'L1' },
-            { trColor: 'orange', textColor: '#000', lineText: 'L2' },
-            { trColor: 'yellow', textColor: '#000', lineText: 'L3' }
-        ];
-        return colors[rowIndex];
-    }
+        // ====== Generate Table ======
+        function generateTable() {
+            const fragment = document.createDocumentFragment();
+            for (let i = 1; i <= 999; i += 2) {
+                const tr = document.createElement('tr');
+                const { trColor, textColor, lineText } = getRowStyle(i);
+                const rowClass = trColor === 'black' ? 'row-l1' : 'row-l2';
 
-    // ====== Event Handling ======
-    function setupEventListeners() {
-        searchInput.addEventListener('input', debounce(searchTable, 700));
-        document.getElementById("reset").addEventListener("click", resetBtn);
+                // Left Breaker
+                const tdLeft = document.createElement('td');
+                tdLeft.className = 'breaker';
+                tdLeft.innerHTML = `
+                    <div class="breaker-top">
+                        <span class="circuit-num">${i}</span>
+                        <div class="terminal-screw"></div>
+                    </div>
+                    <div class="breaker-middle">
+                        <div class="toggle-switch"></div>
+                        <select class="amp-select" data-key="amp-left-${i}">
+                            <option value="15">15A</option>
+                            <option value="20">20A</option>
+                            <option value="30">30A</option>
+                            <option value="40">40A</option>
+                            <option value="50">50A</option>
+                            <option value="60">60A</option>
+                        </select>
+                    </div>
+                    <div class="breaker-bottom">
+                        <div class="test-btn"></div>
+                        <input type="text" class="label-input" placeholder="Label" data-key="label-left-${i}">
+                        <div class="terminal-screw"></div>
+                    </div>
+                `;
 
-        tableBody.addEventListener("click", (event) => {
-            if (event.target.tagName === "TD") {
-                const clickedNumber = parseInt(event.target.innerText);
-                if (!isNaN(clickedNumber)) {
-                    searchInput.value = clickedNumber;
-                    searchTable();
+                // Handle Tie (LINE)
+                const tdLine = document.createElement('td');
+                tdLine.className = 'handle-tie';
+                tdLine.textContent = lineText;
+
+                // Right Breaker
+                const tdRight = document.createElement('td');
+                tdRight.className = 'breaker';
+                tdRight.innerHTML = `
+                    <div class="breaker-top">
+                        <span class="circuit-num">${i + 1}</span>
+                        <div class="terminal-screw"></div>
+                    </div>
+                    <div class="breaker-middle">
+                        <div class="toggle-switch"></div>
+                        <select class="amp-select" data-key="amp-right-${i}">
+                            <option value="15">15A</option>
+                            <option value="20">20A</option>
+                            <option value="30">30A</option>
+                            <option value="40">40A</option>
+                            <option value="50">50A</option>
+                            <option value="60">60A</option>
+                        </select>
+                    </div>
+                    <div class="breaker-bottom">
+                        <div class="test-btn red"></div>
+                        <input type="text" class="label-input" placeholder="Label" data-key="label-right-${i}">
+                        <div class="terminal-screw"></div>
+                    </div>
+                `;
+
+                tr.appendChild(tdLeft);
+                tr.appendChild(tdLine);
+                tr.appendChild(tdRight);
+                tr.className = rowClass;
+                fragment.appendChild(tr);
+
+                // Map circuit numbers to their cell index (0: left, 2: right)
+                rowMap.set(i, { element: tr, cellIndex: 0, color: trColor });
+                rowMap.set(i + 1, { element: tr, cellIndex: 2, color: trColor });
+            }
+            tableBody.appendChild(fragment);
+        }
+
+        function getRowStyle(index) {
+            const rowIndex = Math.floor((index - 1) / 2) % 2;
+            const colors = [
+                { trColor: 'black', textColor: 'white', lineText: 'L1' },
+                { trColor: '#d32f2f', textColor: 'white', lineText: 'L2' }
+            ];
+            return colors[rowIndex];
+        }
+
+        // ====== Apply amp colors to dropdowns ======
+        function applyAmpColors() {
+            document.querySelectorAll('.amp-select').forEach(sel => {
+                const val = sel.value;
+                Object.values(AMP_COLORS).forEach(cls => sel.classList.remove(cls));
+                if (AMP_COLORS[val]) {
+                    sel.classList.add(AMP_COLORS[val]);
                 }
-            }
-        });
-    }
-
-    // ====== Speech Recognition ======
-    function initializeSpeechRecognition() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            console.log("Speech recognition not supported in this browser.");
-            return;
+            });
         }
 
-        const recognition = new SpeechRecognition();
-        recognition.interimResults = false;
+        // ====== LocalStorage: Labels ======
+        function saveLabelsToStorage() {
+            const labels = {};
+            document.querySelectorAll('.label-input').forEach(inp => {
+                const val = inp.value.trim();
+                if (val !== '') {
+                    labels[inp.dataset.key] = val;
+                }
+            });
+            try {
+                localStorage.setItem('circuitLabels', JSON.stringify(labels));
+            } catch (_) {}
+        }
 
-        let isRecognitionRunning = false;
+        function loadLabelsFromStorage() {
+            let stored;
+            try { stored = localStorage.getItem('circuitLabels'); } catch (_) { return; }
+            if (!stored) return;
+            let labels;
+            try { labels = JSON.parse(stored); } catch (_) { return; }
+            if (!labels || typeof labels !== 'object') return;
+            document.querySelectorAll('.label-input').forEach(inp => {
+                const key = inp.dataset.key;
+                if (key && labels[key]) {
+                    inp.value = labels[key];
+                }
+            });
+        }
 
-        languageSelect.addEventListener('change', () => {
-            recognition.lang = languageSelect.value;
-        });
+        // ====== LocalStorage: Amp Settings ======
+        function saveAmpSettings() {
+            const amps = {};
+            document.querySelectorAll('.amp-select').forEach(sel => {
+                amps[sel.dataset.key] = sel.value;
+            });
+            try {
+                localStorage.setItem('circuitAmps', JSON.stringify(amps));
+            } catch (_) {}
+        }
 
-        const debouncedStartRecognition = debounce(() => {
-            if (!isRecognitionRunning) {
-                recognition.lang = languageSelect.value;
+        function loadAmpSettings() {
+            let stored;
+            try { stored = localStorage.getItem('circuitAmps'); } catch (_) { return; }
+            if (!stored) return;
+            let amps;
+            try { amps = JSON.parse(stored); } catch (_) { return; }
+            if (!amps || typeof amps !== 'object') return;
+            document.querySelectorAll('.amp-select').forEach(sel => {
+                const key = sel.dataset.key;
+                if (key && amps[key]) {
+                    sel.value = amps[key];
+                }
+            });
+        }
+
+        // ====== Event Listeners ======
+        function setupEventListeners() {
+            // Save labels on input
+            document.addEventListener('input', (e) => {
+                if (e.target.classList.contains('label-input')) {
+                    saveLabelsToStorage();
+                }
+            });
+
+            // Amp select change: save & apply colors
+            document.addEventListener('change', (e) => {
+                if (e.target.classList.contains('amp-select')) {
+                    saveAmpSettings();
+                    applyAmpColors();
+                }
+            });
+
+            // Also apply colors on input for live feedback
+            document.addEventListener('input', (e) => {
+                if (e.target.classList.contains('amp-select')) {
+                    applyAmpColors();
+                }
+            });
+
+            searchInput.addEventListener('input', debounce(searchTable, 300));
+            resetBtn.addEventListener('click', resetAll);
+
+            // Click on breaker circuit numbers
+            tableBody.addEventListener('click', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+                const td = e.target.closest('td');
+                if (!td) return;
+                if (td.classList.contains('breaker')) {
+                    const numSpan = td.querySelector('.circuit-num');
+                    if (numSpan) {
+                        const num = parseInt(numSpan.textContent, 10);
+                        if (!isNaN(num) && num >= 1 && num <= 999) {
+                            searchInput.value = num;
+                            searchTable();
+                        }
+                    }
+                }
+            });
+
+            // Restrict input to 1-999
+            searchInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+                let num = parseInt(this.value, 10);
+                if (num > 999) this.value = '999';
+            });
+        }
+
+        // ====== Speech Recognition ======
+        function initializeSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                voiceSearchBtn.style.display = 'none';
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                voiceSearchBtn.classList.add('listening');
+                errorMessage.style.color = 'lightgreen';
+                errorMessage.innerText = 'Listening…';
+            };
+
+            recognition.onspeechend = function() {
+                voiceSearchBtn.classList.remove('listening');
+                recognition.stop();
+            };
+
+            recognition.onresult = function(event) {
+                let transcript = event.results[0][0].transcript.trim().toLowerCase();
+                const wordMap = {
+                    'zero': 0, 'one': 1, 'two': 2, 'to': 2, 'too': 2,
+                    'three': 3, 'four': 4, 'for': 4, 'five': 5,
+                    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+                };
+                let spokenNumber = NaN;
+                if (wordMap[transcript] !== undefined) {
+                    spokenNumber = wordMap[transcript];
+                } else {
+                    const match = transcript.match(/\d+/);
+                    if (match) {
+                        spokenNumber = parseInt(match[0], 10);
+                    }
+                }
+                if (!isNaN(spokenNumber) && spokenNumber >= 1 && spokenNumber <= 999) {
+                    errorMessage.innerText = '';
+                    searchInput.value = spokenNumber;
+                    searchTable();
+                } else {
+                    errorMessage.style.color = '#ff3333';
+                    errorMessage.innerText = `Could not read "${transcript}". Try a clear number.`;
+                }
+            };
+
+            recognition.onerror = function() {
+                voiceSearchBtn.classList.remove('listening');
+                errorMessage.style.color = '#ff3333';
+                errorMessage.innerText = 'Speech error. Try again.';
+            };
+
+            voiceSearchBtn.addEventListener('click', () => {
                 recognition.start();
-                isRecognitionRunning = true;
-            }
-        }, 1000);
-
-        voiceSearchBtn.addEventListener('click', debouncedStartRecognition);
-
-        recognition.addEventListener('result', (event) => {
-            searchInput.value = event.results[0][0].transcript;
-            searchTable();
-        });
-
-        recognition.addEventListener('end', () => {
-            isRecognitionRunning = false;
-        });
-    }
-
-    // ====== Core Functions ======
-    function searchTable() {
-        const number = parseInt(searchInput.value);
-        if (isNaN(number) || number < 1 || number > 999) {
-            errorMessage.innerText = "Please enter a number between 1 and 999.";
-            return;
+            });
         }
 
-        const rowData = rowMap.get(number);
-        if (rowData) {
+        // ====== Core Search & Highlight ======
+        function searchTable() {
+            document.querySelectorAll('.voice-hover-active').forEach(el => {
+                el.classList.remove('voice-hover-active');
+            });
+
+            const raw = searchInput.value.trim();
+            if (raw === '') {
+                errorMessage.innerText = '';
+                return;
+            }
+
+            const number = parseInt(raw, 10);
+            if (isNaN(number) || number < 1 || number > 999) {
+                errorMessage.style.color = '#ff3333';
+                errorMessage.innerText = 'Enter a number between 1 and 999.';
+                return;
+            }
+
+            const rowData = rowMap.get(number);
+            if (!rowData) {
+                errorMessage.style.color = '#ff3333';
+                errorMessage.innerText = 'Number not found.';
+                return;
+            }
+
             circuitColorDiv.innerText = number;
             circuitColorDiv.style.backgroundColor = rowData.color;
-            smoothScrollTo(rowData.element);
-            errorMessage.innerText = "";
-        } else {
-            errorMessage.innerText = "Number not found in the table.";
+            circuitColorDiv.style.color = (rowData.color === 'black' || rowData.color === '#d32f2f') ? 'white' : 'black';
+
+            const targetCell = rowData.element.cells[rowData.cellIndex];
+            if (targetCell) {
+                targetCell.classList.add('voice-hover-active');
+            }
+
+            rowData.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            errorMessage.innerText = '';
         }
-    }
 
-    function resetBtn() {
-        circuitColorDiv.innerText = '0';
-        circuitColorDiv.style.backgroundColor = 'white';
-        searchInput.value = "";
-        errorMessage.innerText = "";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // ====== Utility Functions ======
-    function debounce(func, delay) {
-        let timeout;
-        return function (...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), delay);
-        };
-    }
-
-    function smoothScrollTo(element) {
-        window.requestAnimationFrame(() => {
-            window.scrollTo({
-                top: element.offsetTop - 50,
-                behavior: 'smooth'
+        // ====== Reset ======
+        function resetAll() {
+            document.querySelectorAll('.voice-hover-active').forEach(el => {
+                el.classList.remove('voice-hover-active');
             });
-        });
-    }
-</script>
+            circuitColorDiv.innerText = '0';
+            circuitColorDiv.style.backgroundColor = 'white';
+            circuitColorDiv.style.color = 'black';
+            searchInput.value = '';
+            errorMessage.innerText = '';
+            searchInput.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ====== Debounce ======
+        function debounce(fn, delay) {
+            let timer;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+    </script>
 </body>
 </html>
