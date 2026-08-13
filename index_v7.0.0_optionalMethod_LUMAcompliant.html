@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrical Dwelling Load Calculator (LUMA)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* === SCREEN STYLES (unchanged) === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+            background-color: #282c34;
+            color: white;
+        }
+        section {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #3b3f45;
+            border-radius: 10px;
+            border: 1px solid #61dafb;
+            transition: opacity 0.3s;
+        }
+        .section.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #61dafb;
+        }
+        #fixed-appliances-load,
+        #total-cooking-load,
+        #ev-charger-load,
+        #optional-total,
+        #summary-optional-method,
+        #ac-total,
+        #summary-final {
+            border-top: 1px solid #61dafb;
+            padding-top: 10px;
+            width: 100px;
+        }
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        input[type="number"], select {
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #61dafb;
+            background-color: #444;
+            color: white;
+            caret-color: #ff6666;
+            padding: 4px;
+        }
+        #sq-ft {
+            width: 200px;
+            padding: 4px;
+            padding-left: 35px;
+            font-size: 24px;
+        }
+        #acLoad, #heatingLoad {
+            font-size: 14px;
+            padding: 5px 10px;
+        }
+        label, span {
+            font-size: 18px;
+        }
+        #microphoneButton {
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #ff6666;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        #resetStep1Button {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #ff6666;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #61dafb;
+            border: none;
+            border-radius: 5px;
+            color: black;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3b3f45;
+            color: #61dafb;
+        }
+        #step13 header {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        #step13 .input-row {
+            font-size: 18px;
+        }
+        body.light-mode {
+            background-color: #f8f8ff;
+            color: #333;
+        }
+        body.light-mode header h1, body.light-mode header h2 {
+            color: #333;
+        }
+        body.light-mode section {
+            background-color: #f4f4f4;
+            border-color: #cccccc;
+        }
+        body.light-mode button {
+            background-color: #333;
+            color: #ffffff;
+        }
+        body.light-mode button:hover {
+            background-color: #61dafb;
+            color: #000;
+        }
+        .toggleTheme-btn {
+            position: sticky;
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            top: 20px;
+            z-index: 2;
+        }
+        label, p {
+            font-size: 18px;
+        }
+        .error-message {
+            font-size: 12px;
+            color: red;
+            display: inline-block;
+        }
+        .loading-indicator {
+            display: none;
+            margin-left: 10px;
+            font-size: 14px;
+            color: #FFD700;
+        }
+        .loading-indicator.active {
+            display: inline-block;
+        }
+        #service-warning {
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        .ac-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+        .ac-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .ac-row select {
+            width: 70px;
+        }
+        .ac-row .ac-va-display {
+            min-width: 70px;
+            text-align: right;
+        }
+        .add-ac-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        @media (max-width:600px) {
+            body { padding:10px; }
+            section { padding:12px; }
+            .input-row { flex-direction:column; align-items:stretch; }
+            #sq-ft { width:100%; font-size:20px; padding-left:30px; }
+            button { width:100%; }
+            header { flex-direction:column; align-items:flex-start; }
+            .toggleTheme-btn { width:auto; }
+            .ac-row { flex-wrap:wrap; gap:6px; }
+        }
+        
+        @keyframes radial-pulse {
+           0% { box-shadow: 0 0 0 0px rgba(0, 0, 0, 0.5); }
+           100% { box-shadow: 0 0 0 30px rgba(0, 0, 0, 0); }
+        }
+        #backToTopBtn { 
+            animation: radial-pulse 1s infinite;
+            justify-content: center;
+            align-items: center;
+            width: 20px;
+            height: 20px;
+        }
+        #backToTopBtn {
+            display: block;
+            position: fixed;
+            bottom: 80px;
+            left: 80%;
+            transform: translateX(-50%);
+            z-index: 99;
+            font-size: 24px;
+            border: none;
+            outline: none;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.5s;
+            width: 50px;
+            height: 50px;
+            text-align: center;
+        }
+        #backToTopBtn.show {
+            display: block;
+            opacity: .7;
+        }
+        #backToTopBtn:hover {
+            background-color: #333;
+        }
+
+        /* === PROFESSIONAL PRINT STYLES === */
+        @media print {
+            /* Hide interactive elements */
+            button, .toggleTheme-btn, #backToTopBtn, #microphoneButton, #resetStep1Button,
+            .reset-step4, #reset-step10, .add-ac-btn,
+            .input-row select, .input-row input[type="checkbox"], .input-row input[type="text"],
+            .ac-row select, .ac-row input[type="checkbox"],
+            .loading-indicator, .error-message,
+            footer button, .no-print {
+                display: none !important;
+            }
+
+            /* Show the VA display spans in A/C rows */
+            .ac-row .ac-va-display {
+                display: inline !important;
+                min-width: auto;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0.5in;
+                font-size: 12pt;
+                font-family: 'Times New Roman', serif;
+            }
+            section {
+                background: white !important;
+                border: 1px solid #ccc !important;
+                page-break-inside: avoid;
+                margin-bottom: 12px;
+                padding: 12px;
+                border-radius: 0;
+            }
+            header {
+                border-bottom: 2px solid #333;
+                padding-bottom: 4px;
+                margin-bottom: 10px;
+            }
+            h1, h2, h3, h4 {
+                color: black !important;
+            }
+            h1 { font-size: 20pt; }
+            h2 { font-size: 16pt; }
+            h3 { font-size: 14pt; }
+            .input-row {
+                display: flex;
+                justify-content: space-between;
+                border-bottom: 1px dotted #ddd;
+                padding: 4px 0;
+                font-size: 11pt;
+            }
+            .input-row p, .input-row label, .input-row span {
+                font-size: 11pt;
+            }
+            .input-row span {
+                font-weight: bold;
+            }
+            /* A/C rows: show only label and VA value */
+            .ac-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 3px 0;
+                border-bottom: 1px solid #eee;
+                font-size: 11pt;
+            }
+            .ac-row label {
+                display: inline !important;
+                font-weight: normal;
+            }
+            .ac-row .ac-va-display {
+                display: inline !important;
+                font-weight: bold;
+            }
+            /* Hide the "Qty" label and the checkbox */
+            .ac-row .ac-check {
+                display: none !important;
+            }
+            .ac-row select {
+                display: none !important;
+            }
+            .ac-row label[style*="margin-left:auto"] {
+                display: none !important;
+            }
+            /* Keep the service warning visible */
+            #service-warning {
+                display: block !important;
+                color: #d00 !important;
+                font-weight: bold;
+                border: 1px solid #d00;
+                padding: 6px;
+                margin-top: 8px;
+                background: #ffeeee;
+            }
+            /* Footer */
+            footer {
+                display: block !important;
+                font-size: 8pt;
+                color: #666;
+                border-top: 1px solid #ccc;
+                padding-top: 10px;
+                margin-top: 20px;
+                text-align: center;
+            }
+            /* Step 13 - special styling */
+            #step13 .input-row {
+                border-bottom: 1px solid #ccc;
+            }
+            /* Ensure the toggle theme is hidden */
+            .toggleTheme-btn {
+                display: none !important;
+            }
+            /* Make all text black */
+            .light-mode, .light-mode section, .light-mode header {
+                background: white !important;
+                color: black !important;
+                border-color: #ccc !important;
+            }
+            /* Hide the print button itself */
+            button[onclick*="print"] {
+                display: none !important;
+            }
+            /* Show the copyright notice */
+            footer p {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Dwelling Load Calculator</h1>
+    <h2>Optional Method (220.82)</h2>
+    <h2>LUMA<sup>pr</sup> Compliant</h2>
+    <br>
+    <button id="toggleTheme" class="toggleTheme-btn" aria-label="Toggle dark/light mode">Toggle Dark/Light Mode</button>
+    <br><br><br>
+
+    <!-- Step 1 -->
+    <section id="step1">
+        <header>
+            <h3>🔆 Step 1: General Lighting & Receptacles</h3>
+            <p>Art. 220.12</p>
+        </header>
+        <span id="sq-ft-error" class="error-message" role="alert"></span>
+        <div class="input-row">
+            <label for="sq-ft">🏠 Square Footage</label>
+            <div style="position: relative; width: 100%; max-width: 200px;">
+                <input type="text" id="sq-ft" placeholder="Enter Sq Ft" min="0" style="width:100%; padding-right:30px;" aria-describedby="sq-ft-error">
+                <button id="microphoneButton" onclick="startVoiceRecognition()" aria-label="Voice input for square footage">
+                    <span class="microphoneIcon"><i class="fa fa-microphone"></i></span>
+                </button>
+                <button id="resetStep1Button" onclick="resetForm()" aria-label="Reset all fields">
+                    <span class="resetStep1Icon"><i class="fa fa-times-circle"></i></span>
+                </button>
+            </div>
+        </div>
+        <div class="input-row">
+            <p>💡 Lighting Load:</p>
+            <span id="lighting-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>🔌 Receptacle Circuits:</p>
+            <span id="receptacle-circuits" aria-live="polite">0</span>
+        </div>
+    </section>
+
+    <!-- Step 2 -->
+    <section id="step2">
+        <header>
+            <h3>🤖 Step 2: Small Appliances</h3>
+            <p>Art. 220.52A</p>
+        </header>
+        <div class="input-row">
+            <label for="small-appliances">🎛 Small Appliances</label>
+            <select id="small-appliances">
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        </div>
+        <div class="input-row">
+            <p>Total Small Appliance Load:</p>
+            <span id="small-appliances-load" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section id="step3">
+        <header>
+            <h3>👕 Step 3: Laundry</h3>
+            <p>Art. 220.52B</p>
+        </header>
+        <div class="input-row">
+            <label for="laundry">🫧 Laundry Circuits</label>
+            <select id="laundry">
+                <option value="0">0</option>
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+            </select>
+        </div>
+        <div class="input-row">
+            <p>Total Laundry Load:</p>
+            <span id="laundry-load" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 4 -->
+    <section id="step4">
+        <header>
+            <h3>🧰 Step 4: Fixed Appliances</h3>
+            <p>Art. 220.53</p>
+        </header>
+        <div class="input-row">
+            <label><input type="checkbox" id="water-heater"> 🚿 Water Heater <small>(4500 VA default)</small></label>
+            <span id="water-heater-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label><input type="checkbox" id="microwave"> 🍲 Microwave <small>(1200 VA default)</small></label>
+            <span id="microwave-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label><input type="checkbox" id="dishwasher"> 🧼 Dishwasher
+                <select id="dwHP">
+                    <option value="864">1/3 HP</option>
+                    <option value="1176" selected>1/2 HP (typical)</option>
+                    <option value="1656">3/4 HP</option>
+                </select>
+            </label>
+            <span id="dishwasher-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label>
+                <input type="checkbox" id="trash-compactor"> 🗑️ Trash Compactor
+                <select id="trash-compactor-select">
+                    <option value="520">1/3 HP</option>
+                    <option value="1176">1/2 HP</option>
+                </select>
+            </label>
+            <span id="trash-compactor-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label>
+                <input type="checkbox" id="vacuum-system"> 🌀 Vacuum System
+                <select id="vacuum-system-select">
+                    <option value="1920">1 HP</option>
+                    <option value="2880">2 HP</option>
+                    <option value="4080">3 HP</option>
+                </select>
+            </label>
+            <span id="vacuum-system-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label>
+                <input type="checkbox" id="garbage-disposal"> ♻️ Waste Disposal
+                <select id="garbage-disposal-select">
+                    <option value="528">1/6 HP</option>
+                    <option value="696">1/4 HP</option>
+                    <option value="864">1/3 HP</option>
+                    <option value="1176">1/2 HP</option>
+                    <option value="1656">3/4 HP</option>
+                    <option value="1920">1 HP</option>
+                </select>
+            </label>
+            <span id="garbage-disposal-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label>
+                <input type="checkbox" id="sump-pump"> 💧 Sump Pump
+                <select id="sump-pump-select">
+                    <option value="528">1/6 HP</option>
+                    <option value="696">1/4 HP</option>
+                    <option value="864">1/3 HP</option>
+                    <option value="1176">1/2 HP</option>
+                    <option value="1656">3/4 HP</option>
+                    <option value="1920">1 HP</option>
+                </select>
+            </label>
+            <span id="sump-pump-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label>
+                <input type="checkbox" id="well-pump">🚰 Well Pump
+                <select id="well-pump-select">
+                    <option value="1176">1/2 HP (240V)</option>
+                    <option value="1656">3/4 HP (240V)</option>
+                    <option value="1920">1 HP (240V)</option>
+                    <option value="2400">1.5 HP (240V)</option>
+                    <option value="2880">2 HP (240V)</option>
+                    <option value="4080">3 HP (240V)</option>
+                </select>
+            </label>
+            <span id="well-pump-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label>
+                <input type="checkbox" id="pool-pump"> 🏊 Pool Pump
+                <select id="pool-pump-select">
+                    <option value="1920">1 HP (240V)</option>
+                    <option value="2400">1.5 HP (240V)</option>
+                    <option value="2880">2 HP (240V)</option>
+                    <option value="4080">3 HP (240V)</option>
+                </select>
+            </label>
+            <span id="pool-pump-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label>
+                <input type="checkbox" id="spa-pump"> 🛁 SPA Pump
+                <select id="spa-pump-select">
+                    <option value="1940">1 HP (240V)</option>
+                    <option value="2400">1.5 HP (240V)</option>
+                    <option value="2880">2 HP (240V)</option>
+                    <option value="4080">3 HP (240V)</option>
+                </select>
+            </label>
+            <span id="spa-pump-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label>
+                <input type="checkbox" id="garage-door"> 🚘 Garage Door
+                <select id="garage-door-select">
+                    <option value="864">1/3 HP</option>
+                    <option value="1176">1/2 HP</option>
+                    <option value="1656">3/4 HP</option>
+                    <option value="1920">1 HP</option>
+                </select>
+            </label>
+            <span id="garage-door-load" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <button id="reset-step4" class="reset-step4" type="button" onclick="resetStep4()" style="padding:10px 20px; background-color:#ff6666; border:none; border-radius:5px; color:black; font-size:16px; cursor:pointer;">
+                ↺ Reset Step 4
+            </button>
+        </div>
+        <div class="input-row">
+            <p>Total Fixed Appliances Load:</p>
+            <span id="fixed-appliances-load" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 5 -->
+    <section id="step5">
+        <header>
+            <h3>👚 Step 5: Clothes Dryer</h3>
+            <p>Art. 220.54</p>
+        </header>
+        <div class="input-row">
+            <label><input type="checkbox" id="dryer"> 🧺 Clothes Dryer (5000 VA default)</label>
+        </div>
+        <div class="input-row">
+            <p>Total Clothes Dryer Load</p>
+            <span id="dryer-load" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 6 -->
+    <section id="step6">
+        <header>
+            <h3>♨️ Step 6: Cooking Equipment</h3>
+            <p>Art. 220.55</p>
+        </header>
+        <div class="input-row">
+            <label><input type="checkbox" id="cooking-range"> 🔥 Cooking Range
+            <select id="cooking-range-value">
+                <option value="8000">Small (8k VA)</option>
+                <option value="12000">Large (12k VA)</option>
+            </select></label>
+            <span id="cooking-range-result" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label><input type="checkbox" id="counter-top-range"> 🔥 Counter Top Range
+            <select id="counter-top-range-value">
+                <option value="8000">Small (8k VA)</option>
+                <option value="12000">Large (12k VA)</option>
+            </select></label>
+            <span id="counter-top-range-result" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label><input type="checkbox" id="wall-oven-range"> 🔥 Wall Mounted Oven 1
+            <select id="wall-oven-value">
+                <option value="4000">Small (4k VA)</option>
+                <option value="8000">Large (8k VA)</option>
+            </select></label>
+            <span id="wall-oven-result" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label><input type="checkbox" id="wall-oven-2-range"> 🔥 Wall Mounted Oven 2
+            <select id="wall-oven-2-value">
+                <option value="4000">Small (4k VA)</option>
+                <option value="8000">Large (8k VA)</option>
+            </select></label>
+            <span id="wall-oven-2-result" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p> Total Cooking Equipment Load:</p>
+            <span id="total-cooking-load" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 7 -->
+    <section id="step7">
+        <header>
+            <h3>🔋 Step 7: EV Chargers</h3>
+            <p>Art. 625.42</p>
+        </header>
+        <div class="input-row">
+            <label><input type="checkbox" id="ev-charger-1"> 🏎️ EV Charger 1
+            <select id="ev-charger-1-value">
+                <option value="7600">32A (7.6k VA)</option>
+                <option value="14400">48A (14.4k VA)</option>
+                <option value="19600">80A (19.6k VA)</option>
+            </select></label>
+            <span id="ev-charger-1-result" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <label><input type="checkbox" id="ev-charger-2"> 🚗 EV Charger 2
+            <select id="ev-charger-2-value">
+                <option value="7600">32A (7.6k VA)</option>
+                <option value="14400">48A (14.4k VA)</option>
+                <option value="19600">80A (19.6k VA)</option>
+            </select></label>
+            <span id="ev-charger-2-result" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>Total EV Charger Load:</p>
+            <span id="ev-charger-load" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 8 (NO A/C) -->
+    <section id="step8">
+        <header>
+            <h3>🔢 Step 8: Summary of All Totals</h3>
+            <p>TOTAL</p>
+        </header>
+        <div class="input-row">
+            <p>💡 Total General Lighting Load:</p>
+            <span id="summary-general-lighting" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>🤖 Total Small Appliances Load:</p>
+            <span id="summary-small-appliances" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>👕 Total Laundry Load:</p>
+            <span id="summary-laundry" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>🧰 Total Fixed Appliances Load:</p>
+            <span id="summary-fixed-appliances" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>👚 Total Clothes Dryer Load:</p>
+            <span id="summary-clothes-dryer" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>♨️ Total Cooking Equipment Load:</p>
+            <span id="summary-cooking-equipment" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>🔋 Total EV Charger Load:</p>
+            <span id="summary-ev-charger" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>Total Summary Calculation Load:</p>
+            <span id="summary-optional-method" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 9 -->
+    <section id="step9">
+        <header>
+            <h3>📖 Step 9: Optional Method Calculation</h3>
+            <p>Art. 220.82</p>
+        </header>
+        <div class="input-row">
+            <p>First 10000 VA at 100%:</p>
+            <span id="first-10000" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>Remainder at 40%:</p>
+            <span id="remainder" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>Total Optional Load (without A/C):</p>
+            <span id="optional-total" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 10: A/C Mini Splits -->
+    <section id="step10">
+        <header>
+            <h3>❄️ Step 10: A/C Mini Splits</h3>
+            <p> – Tons to VA</p>
+        </header>
+        <div id="ac-container">
+            <div class="ac-row">
+                <input type="checkbox" class="ac-check" data-tons="1">
+                <label style="font-size:16px;">🧊12,000 BTU - 1 Ton</label>
+                <label style="font-size:14px; margin-left:auto;">Qty</label>
+                <select class="ac-qty" data-tons="1">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <span class="ac-va-display" style="min-width:70px; text-align:right;">0 VA</span>
+            </div>
+            <div class="ac-row">
+                <input type="checkbox" class="ac-check" data-tons="1.5">
+                <label style="font-size:16px;">🧊18,000 BTU - 1.5 Tons</label>
+                <label style="font-size:14px; margin-left:auto;">Qty</label>
+                <select class="ac-qty" data-tons="1.5">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <span class="ac-va-display" style="min-width:70px; text-align:right;">0 VA</span>
+            </div>
+            <div class="ac-row">
+                <input type="checkbox" class="ac-check" data-tons="2">
+                <label style="font-size:16px;">🧊24,000 BTU - 2 Tons</label>
+                <label style="font-size:14px; margin-left:auto;">Qty</label>
+                <select class="ac-qty" data-tons="2">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <span class="ac-va-display" style="min-width:70px; text-align:right;">0 VA</span>
+            </div>
+            <div class="ac-row">
+                <input type="checkbox" class="ac-check" data-tons="3">
+                <label style="font-size:16px;">🧊36,000 BTU - 3 Tons</label>
+                <label style="font-size:14px; margin-left:auto;">Qty</label>
+                <select class="ac-qty" data-tons="3">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <span class="ac-va-display" style="min-width:70px; text-align:right;">0 VA</span>
+            </div>
+        </div>
+        <div class="input-row" style="justify-content:flex-start; gap:10px;">
+            <button id="reset-step10" type="button" onclick="resetStep10()" style="padding:6px 16px; background-color:#ff6666; border:none; border-radius:5px; color:black; font-size:14px; cursor:pointer;">
+                ↺ Reset A/C
+            </button>
+        </div>
+        <div class="input-row">
+            <p>Total A/C Load:</p>
+            <span id="ac-total" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 11 -->
+    <section id="step11">
+        <header>
+            <h3>✅ Step 11: Final Load</h3>
+            <p>TOTAL</p>
+        </header>
+        <div class="input-row">
+            <p>✴️ Total Optional Method Load (without A/C):</p>
+            <span id="optional-method-final" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>❄️ Total A/C Load:</p>
+            <span id="ac-load-final" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>Final Service Load:</p>
+            <span id="summary-final" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 12 -->
+    <section id="step12">
+        <header>
+            <h3>⚪ Step 12: Neutral Load</h3>
+            <p>Art. 220.61</p>
+        </header>
+        <div class="input-row">
+            <p>Neutral Demand Load:</p>
+            <span id="neutral-load" aria-live="polite">0 VA</span>
+        </div>
+    </section>
+
+    <!-- Step 13 -->
+    <section id="step13">
+        <header>
+            <h3>Main Panel Service</h3>
+            <p>RECOM</p>
+        </header>
+        <div class="input-row">
+            <p></p>
+            <p class="art-310-12">Art. 310.12</p>
+        </div>
+        <h3>RECOM Summary</h3>
+        <div class="input-row">
+            <p>🏠 House Square Footage:</p>
+            <span id="square-footage-step13" aria-live="polite">0 SqFt</span>
+        </div>
+        <div class="input-row">
+            <p>🔌 Main Service Load:</p>
+            <span id="summary-final-step13" aria-live="polite">0 VA</span>
+        </div>
+        <div class="input-row">
+            <p>⚡ Panel Ampacity:</p>
+            <span id="breaker-size" aria-live="polite">0 A</span>
+        </div>
+        <div id="service-warning"></div>
+        <h3>Copper Wiring</h3>
+        <div class="input-row">
+            <p>Service Wire:</p>
+            <span id="copper-service">#0</span>
+        </div>
+        <div class="input-row">
+            <p>Ground Wire:</p>
+            <span id="copper-ground">#0</span>
+        </div>
+        <h3>Aluminum Wiring</h3>
+        <div class="input-row">
+            <p>Service Wire:</p>
+            <span id="aluminum-service">#0</span>
+        </div>
+        <div class="input-row">
+            <p>Ground Wire:</p>
+            <span id="aluminum-ground">#0</span>
+        </div>
+    </section>
+
+    <!-- Action Buttons (all hidden in print) -->
+    <button type="button" onclick="resetForm()" style="padding:10px 20px; background-color:#ff6666; border:none; border-radius:5px; color:black; font-size:16px; cursor:pointer;">
+        ↺ Reset All Steps
+    </button>
+    <br><br>
+    <button type="button" onclick="generatePDF()" style="padding:10px 20px; background-color:#4CAF50; color:black; border:none; border-radius:5px; cursor:pointer; font-size:16px;">
+        Generate PDF Report
+    </button>
+    <br><br>
+    <button type="button" onclick="exportToExcel()">Export to Excel</button>
+    <br><br>
+    <!-- NEW: Print Report button -->
+    <button type="button" onclick="window.print()" style="padding:10px 20px; background-color:#f0ad4e; color:black; border:none; border-radius:5px; cursor:pointer; font-size:16px;">
+        🖨️ Print Report
+    </button>
+    <br><br><br><br>
+
+    <button id="backToTopBtn" onclick="scrollToTop()">&#8593;</button>
+
+    <footer>
+        <p>© 2025 MaDu Design by Marcos Duprey. All Rights Reserved.</p>
+    </footer>
+
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+    /* ===========================
+       THEME TOGGLE
+    ============================ */
+    document.getElementById("toggleTheme").addEventListener("click", () => {
+        document.body.classList.toggle("light-mode");
+        const theme = document.body.classList.contains("light-mode") ? "light" : "dark";
+        localStorage.setItem("theme", theme);
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const theme = localStorage.getItem("theme");
+        if (theme === "light") {
+            document.body.classList.add("light-mode");
+        }
+        // Steps are always enabled – no disabling
+        restrictToNumbersOnly();
+
+        // Global listeners for static inputs
+        document.querySelectorAll("input, select").forEach(input => {
+            input.addEventListener("input", calculateFinalLoad);
+            input.addEventListener("change", calculateFinalLoad);
+        });
+
+        // Event delegation for A/C rows
+        document.getElementById('ac-container').addEventListener('change', function(e) {
+            if (e.target.classList.contains('ac-check') || e.target.classList.contains('ac-qty')) {
+                calculateFinalLoad();
+            }
+        });
+
+        // Load saved data (if any)
+        loadState();
+
+        // Ensure calculation runs after loading
+        calculateFinalLoad();
+    });
+
+    /* ===========================
+       TOAST NOTIFICATION FOR EMPTY SQ FT (informational only)
+    ============================ */
+    (function createToast() {
+        if (document.getElementById('toast-message')) return;
+        const toast = document.createElement('div');
+        toast.id = 'toast-message';
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #ff6666;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.4s ease;
+            max-width: 90%;
+            text-align: center;
+            pointer-events: auto;
+            cursor: pointer;
+        `;
+        toast.textContent = '📐 Please enter the Square Footage in Step 1 first to enable all calculations.';
+        document.body.appendChild(toast);
+    })();
+
+    let toastTimer = null;
+
+    function showToast() {
+        const toast = document.getElementById('toast-message');
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        toastTimer = setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(-100px)';
+        }, 3000);
+    }
+
+    document.getElementById('toast-message')?.addEventListener('click', function() {
+        clearTimeout(toastTimer);
+        this.style.opacity = '0';
+        this.style.transform = 'translateX(-50%) translateY(-100px)';
+    });
+
+    // Show toast as a reminder, but don't block interaction
+    document.addEventListener('click', function(e) {
+        const sqft = document.getElementById('sq-ft').value.trim();
+        if (sqft !== '') return;
+        const target = e.target.closest('section');
+        if (!target) return;
+        if (target.id === 'step1') return;
+        // Only show toast, don't prevent interaction
+        showToast();
+    });
+
+    document.addEventListener('touchstart', function(e) {
+        const sqft = document.getElementById('sq-ft').value.trim();
+        if (sqft !== '') return;
+        const target = e.target.closest('section');
+        if (!target) return;
+        if (target.id === 'step1') return;
+        showToast();
+    });
+
+    /* ===========================
+       VOICE RECOGNITION
+    ============================ */
+    function startVoiceRecognition() {
+        if (!("webkitSpeechRecognition" in window)) {
+            alert("Your browser does not support voice recognition. Try using Chrome.");
+            return;
+        }
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+        const micButton = document.getElementById("microphoneButton");
+        const sqftInput = document.getElementById("sq-ft");
+
+        micButton.disabled = true;
+        micButton.style.color = "#FFD700";
+        const loading = document.createElement('span');
+        loading.className = 'loading-indicator active';
+        loading.textContent = 'Listening...';
+        micButton.parentNode.appendChild(loading);
+
+        recognition.start();
+
+        recognition.onresult = function(event) {
+            let spokenText = event.results[0][0].transcript;
+            let numericValue = spokenText.replace(/\D/g, "");
+            if (numericValue) {
+                sqftInput.value = numericValue;
+                calculateFinalLoad();
+            }
+        };
+
+        recognition.onend = function() {
+            micButton.style.color = "#ff6666";
+            micButton.disabled = false;
+            const loaders = micButton.parentNode.querySelectorAll('.loading-indicator');
+            loaders.forEach(el => el.remove());
+        };
+
+        recognition.onerror = function(event) {
+            alert("Speech recognition error: " + event.error);
+            micButton.style.color = "#ff6666";
+            micButton.disabled = false;
+            const loaders = micButton.parentNode.querySelectorAll('.loading-indicator');
+            loaders.forEach(el => el.remove());
+        };
+    }
+
+    /* ===========================
+       RESTRICT SQ FT TO NUMBERS
+    ============================ */
+    function restrictToNumbersOnly() {
+        const sqftInput = document.getElementById("sq-ft");
+        const errorMessage = document.getElementById("sq-ft-error");
+        let errorTimer = null;
+
+        function hideErrorMessage() {
+            errorMessage.textContent = "";
+            errorMessage.style.display = "inline-block";
+        }
+
+        sqftInput.addEventListener("input", () => {
+            const currentValue = sqftInput.value;
+            const sanitizedValue = currentValue.replace(/[^0-9]/g, "");
+            if (currentValue !== sanitizedValue) {
+                sqftInput.value = sanitizedValue;
+                errorMessage.textContent = "Only numbers are allowed.";
+                errorMessage.style.display = "inline-block";
+                clearTimeout(errorTimer);
+                errorTimer = setTimeout(hideErrorMessage, 3000);
+            } else {
+                hideErrorMessage();
+            }
+        });
+
+        sqftInput.addEventListener("blur", () => {
+            if (sqftInput.value.trim() === "") {
+                errorMessage.textContent = "This field cannot be empty.";
+                errorMessage.style.display = "block";
+                clearTimeout(errorTimer);
+                errorTimer = setTimeout(hideErrorMessage, 3000);
+            }
+        });
+
+        sqftInput.addEventListener("focus", () => {
+            clearTimeout(errorTimer);
+            hideErrorMessage();
+        });
+    }
+
+    /* ===========================
+       STEP 1: LIGHTING
+    ============================ */
+    function calculateLightingLoad() {
+        const sqft = parseInt(document.getElementById("sq-ft").value) || 0;
+        const lightingLoad = sqft * 3;
+        const receptacleCircuits = Math.ceil(lightingLoad / (15 * 120));
+        document.getElementById("lighting-load").innerText = `${lightingLoad} VA`;
+        document.getElementById("receptacle-circuits").innerText = receptacleCircuits;
+        return lightingLoad;
+    }
+
+    /* ===========================
+       STEP 2: SMALL APPLIANCES
+    ============================ */
+    function calculateSmallApplianceLoad() {
+        const circuits = parseInt(document.getElementById("small-appliances").value) || 2;
+        const load = circuits * 1500;
+        document.getElementById("small-appliances-load").innerText = `${load} VA`;
+        return load;
+    }
+
+    /* ===========================
+       STEP 3: LAUNDRY
+    ============================ */
+    function calculateLaundryLoad() {
+        const circuits = parseInt(document.getElementById("laundry").value) || 1;
+        const load = circuits * 1500;
+        document.getElementById("laundry-load").innerText = `${load} VA`;
+        return load;
+    }
+
+    /* ===========================
+       STEP 4: FIXED APPLIANCES
+    ============================ */
+    function calculateFixedApplianceLoad() {
+        let fixedLoad = 0;
+
+        function calculateCheckboxLoad(checkboxId, fixedValue, displayId) {
+            const isChecked = document.getElementById(checkboxId).checked;
+            const load = isChecked ? fixedValue : 0;
+            document.getElementById(displayId).innerText = `${load} VA`;
+            return load;
+        }
+
+        function calculateDropdownLoad(checkboxId, selectId, displayId) {
+            const isChecked = document.getElementById(checkboxId).checked;
+            const load = isChecked ? parseInt(document.getElementById(selectId).value || 0) : 0;
+            document.getElementById(displayId).innerText = `${load} VA`;
+            return load;
+        }
+
+        fixedLoad += calculateCheckboxLoad("water-heater", 4500, "water-heater-load");
+        fixedLoad += calculateCheckboxLoad("microwave", 1200, "microwave-load");
+        fixedLoad += calculateDropdownLoad("dishwasher", "dwHP", "dishwasher-load");
+        fixedLoad += calculateDropdownLoad("trash-compactor", "trash-compactor-select", "trash-compactor-load");
+        fixedLoad += calculateDropdownLoad("vacuum-system", "vacuum-system-select", "vacuum-system-load");
+        fixedLoad += calculateDropdownLoad("garbage-disposal", "garbage-disposal-select", "garbage-disposal-load");
+        fixedLoad += calculateDropdownLoad("sump-pump", "sump-pump-select", "sump-pump-load");
+        fixedLoad += calculateDropdownLoad("well-pump", "well-pump-select", "well-pump-load");
+        fixedLoad += calculateDropdownLoad("pool-pump", "pool-pump-select", "pool-pump-load");
+        fixedLoad += calculateDropdownLoad("spa-pump", "spa-pump-select", "spa-pump-load");
+        fixedLoad += calculateDropdownLoad("garage-door", "garage-door-select", "garage-door-load");
+
+        document.getElementById("fixed-appliances-load").innerText = `${fixedLoad.toFixed(0)} VA`;
+        return fixedLoad;
+    }
+
+    function get120VFixedLoad() {
+        let load120 = 0;
+        if (document.getElementById("dishwasher").checked) load120 += parseInt(document.getElementById("dwHP").value);
+        if (document.getElementById("microwave").checked) load120 += 1200;
+        if (document.getElementById("trash-compactor").checked) load120 += parseInt(document.getElementById("trash-compactor-select").value);
+        if (document.getElementById("vacuum-system").checked) load120 += parseInt(document.getElementById("vacuum-system-select").value);
+        if (document.getElementById("garbage-disposal").checked) load120 += parseInt(document.getElementById("garbage-disposal-select").value);
+        if (document.getElementById("sump-pump").checked) load120 += parseInt(document.getElementById("sump-pump-select").value);
+        if (document.getElementById("garage-door").checked) load120 += parseInt(document.getElementById("garage-door-select").value);
+        return load120;
+    }
+
+    /* ===========================
+       STEP 5: DRYER
+    ============================ */
+    function calculateClothesDryerLoad() {
+        const load = document.getElementById("dryer").checked ? 5000 : 0;
+        document.getElementById("dryer-load").innerText = `${load} VA`;
+        return load;
+    }
+
+    /* ===========================
+       STEP 6: COOKING
+    ============================ */
+    function calculateCookingLoad() {
+        let total = 0;
+        function getCheckboxValue(checkboxId, selectId, resultId) {
+            const checked = document.getElementById(checkboxId).checked;
+            const val = checked ? parseInt(document.getElementById(selectId).value) || 0 : 0;
+            document.getElementById(resultId).innerText = `${val} VA`;
+            return val;
+        }
+        total += getCheckboxValue("cooking-range", "cooking-range-value", "cooking-range-result");
+        total += getCheckboxValue("counter-top-range", "counter-top-range-value", "counter-top-range-result");
+        total += getCheckboxValue("wall-oven-range", "wall-oven-value", "wall-oven-result");
+        total += getCheckboxValue("wall-oven-2-range", "wall-oven-2-value", "wall-oven-2-result");
+        document.getElementById("total-cooking-load").innerText = `${total} VA`;
+        return total;
+    }
+
+    /* ===========================
+       STEP 7: EV CHARGERS
+    ============================ */
+    function calculateEVLoad() {
+        let load = 0;
+        function getChargerLoad(checkboxId, selectId, resultId) {
+            const checked = document.getElementById(checkboxId).checked;
+            const val = checked ? parseInt(document.getElementById(selectId).value) || 0 : 0;
+            document.getElementById(resultId).innerText = `${val} VA`;
+            return val;
+        }
+        load += getChargerLoad("ev-charger-1", "ev-charger-1-value", "ev-charger-1-result");
+        load += getChargerLoad("ev-charger-2", "ev-charger-2-value", "ev-charger-2-result");
+        document.getElementById("ev-charger-load").innerText = `${load} VA`;
+        return load;
+    }
+
+    /* ===========================
+       STEP 10: A/C LOAD (static list with checkboxes + quantity)
+    ============================ */
+    function calculateACLoad() {
+        const rows = document.querySelectorAll('.ac-row');
+        let totalVA = 0;
+        rows.forEach(row => {
+            const checkbox = row.querySelector('.ac-check');
+            const qtySelect = row.querySelector('.ac-qty');
+            const vaDisplay = row.querySelector('.ac-va-display');
+            if (checkbox && qtySelect && vaDisplay) {
+                const tons = parseFloat(checkbox.dataset.tons) || 0;
+                const qty = parseInt(qtySelect.value) || 0;
+                const va = checkbox.checked ? tons * 1000 * qty : 0;
+                vaDisplay.textContent = `${va} VA`;
+                totalVA += va;
+            }
+        });
+        return totalVA;
+    }
+
+    /* ===========================
+       UPDATE A/C DISPLAY
+    ============================ */
+    function updateACDisplay(acTotal) {
+        document.getElementById('ac-total').innerText = `${acTotal} VA`;
+        document.getElementById('ac-load-final').innerText = `${acTotal} VA`;
+    }
+
+    /* ===========================
+       CORE CALCULATION ENGINE
+    ============================ */
+    function calculateFinalLoad() {
+        const lighting = calculateLightingLoad();
+        const smallApp = calculateSmallApplianceLoad();
+        const laundry = calculateLaundryLoad();
+        const fixed = calculateFixedApplianceLoad();
+        const dryer = calculateClothesDryerLoad();
+        const cooking = calculateCookingLoad();
+        const ev = calculateEVLoad();
+        const ac = calculateACLoad();
+
+        updateACDisplay(ac);
+
+        const generalLoad = lighting + smallApp + laundry + fixed + dryer + cooking + ev;
+        const first10000 = Math.min(generalLoad, 10000);
+        const remainderAt40 = generalLoad > 10000 ? (generalLoad - 10000) * 0.40 : 0;
+        const optionalLoad = first10000 + remainderAt40;
+        const finalServiceLoad = optionalLoad + ac;
+
+        // Step 8 – NO A/C
+        document.getElementById("summary-general-lighting").innerText = `${lighting.toFixed(0)} VA`;
+        document.getElementById("summary-small-appliances").innerText = `${smallApp.toFixed(0)} VA`;
+        document.getElementById("summary-laundry").innerText = `${laundry.toFixed(0)} VA`;
+        document.getElementById("summary-fixed-appliances").innerText = `${fixed.toFixed(0)} VA`;
+        document.getElementById("summary-clothes-dryer").innerText = `${dryer.toFixed(0)} VA`;
+        document.getElementById("summary-cooking-equipment").innerText = `${cooking.toFixed(0)} VA`;
+        document.getElementById("summary-ev-charger").innerText = `${ev.toFixed(0)} VA`;
+        document.getElementById("summary-optional-method").innerText = `${generalLoad.toFixed(0)} VA`;
+
+        // Step 9
+        document.getElementById("first-10000").innerText = `${first10000.toFixed(0)} VA`;
+        document.getElementById("remainder").innerText = `${remainderAt40.toFixed(0)} VA`;
+        document.getElementById("optional-total").innerText = `${optionalLoad.toFixed(0)} VA`;
+
+        // Step 11
+        document.getElementById("optional-method-final").innerText = `${optionalLoad.toFixed(0)} VA`;
+        document.getElementById("summary-final").innerText = `${finalServiceLoad.toFixed(0)} VA`;
+
+        calculateNeutralLoad();
+        recommendBreakerAndWire(finalServiceLoad);
+
+        // Save state after all updates
+        saveState();
+
+        return finalServiceLoad;
+    }
+
+    /* ===========================
+       SAVE / LOAD / CLEAR STATE
+    ============================ */
+    function saveState() {
+        const data = {
+            sqft: document.getElementById('sq-ft').value,
+            smallAppliances: document.getElementById('small-appliances').value,
+            laundry: document.getElementById('laundry').value,
+            // Step 4
+            waterHeater: document.getElementById('water-heater').checked,
+            microwave: document.getElementById('microwave').checked,
+            dishwasher: document.getElementById('dishwasher').checked,
+            dwHP: document.getElementById('dwHP').value,
+            trashCompactor: document.getElementById('trash-compactor').checked,
+            trashCompactorSelect: document.getElementById('trash-compactor-select').value,
+            vacuumSystem: document.getElementById('vacuum-system').checked,
+            vacuumSystemSelect: document.getElementById('vacuum-system-select').value,
+            garbageDisposal: document.getElementById('garbage-disposal').checked,
+            garbageDisposalSelect: document.getElementById('garbage-disposal-select').value,
+            sumpPump: document.getElementById('sump-pump').checked,
+            sumpPumpSelect: document.getElementById('sump-pump-select').value,
+            wellPump: document.getElementById('well-pump').checked,
+            wellPumpSelect: document.getElementById('well-pump-select').value,
+            poolPump: document.getElementById('pool-pump').checked,
+            poolPumpSelect: document.getElementById('pool-pump-select').value,
+            spaPump: document.getElementById('spa-pump').checked,
+            spaPumpSelect: document.getElementById('spa-pump-select').value,
+            garageDoor: document.getElementById('garage-door').checked,
+            garageDoorSelect: document.getElementById('garage-door-select').value,
+            // Step 5
+            dryer: document.getElementById('dryer').checked,
+            // Step 6
+            cookingRange: document.getElementById('cooking-range').checked,
+            cookingRangeValue: document.getElementById('cooking-range-value').value,
+            counterTopRange: document.getElementById('counter-top-range').checked,
+            counterTopRangeValue: document.getElementById('counter-top-range-value').value,
+            wallOvenRange: document.getElementById('wall-oven-range').checked,
+            wallOvenValue: document.getElementById('wall-oven-value').value,
+            wallOven2Range: document.getElementById('wall-oven-2-range').checked,
+            wallOven2Value: document.getElementById('wall-oven-2-value').value,
+            // Step 7
+            evCharger1: document.getElementById('ev-charger-1').checked,
+            evCharger1Value: document.getElementById('ev-charger-1-value').value,
+            evCharger2: document.getElementById('ev-charger-2').checked,
+            evCharger2Value: document.getElementById('ev-charger-2-value').value,
+            // A/C rows
+            acRows: []
+        };
+        document.querySelectorAll('.ac-row').forEach(row => {
+            const checkbox = row.querySelector('.ac-check');
+            const qtySelect = row.querySelector('.ac-qty');
+            if (checkbox && qtySelect) {
+                data.acRows.push({
+                    tons: checkbox.dataset.tons,
+                    checked: checkbox.checked,
+                    qty: qtySelect.value
+                });
+            }
+        });
+        localStorage.setItem('lumaCalculatorData', JSON.stringify(data));
+    }
+
+    function loadState() {
+        const saved = localStorage.getItem('lumaCalculatorData');
+        if (!saved) return;
+        try {
+            const data = JSON.parse(saved);
+            // Set values
+            document.getElementById('sq-ft').value = data.sqft || '';
+            document.getElementById('small-appliances').value = data.smallAppliances || '2';
+            document.getElementById('laundry').value = data.laundry || '1';
+            // Step 4
+            document.getElementById('water-heater').checked = data.waterHeater || false;
+            document.getElementById('microwave').checked = data.microwave || false;
+            document.getElementById('dishwasher').checked = data.dishwasher || false;
+            document.getElementById('dwHP').value = data.dwHP || '1176';
+            document.getElementById('trash-compactor').checked = data.trashCompactor || false;
+            document.getElementById('trash-compactor-select').value = data.trashCompactorSelect || '520';
+            document.getElementById('vacuum-system').checked = data.vacuumSystem || false;
+            document.getElementById('vacuum-system-select').value = data.vacuumSystemSelect || '1920';
+            document.getElementById('garbage-disposal').checked = data.garbageDisposal || false;
+            document.getElementById('garbage-disposal-select').value = data.garbageDisposalSelect || '528';
+            document.getElementById('sump-pump').checked = data.sumpPump || false;
+            document.getElementById('sump-pump-select').value = data.sumpPumpSelect || '528';
+            document.getElementById('well-pump').checked = data.wellPump || false;
+            document.getElementById('well-pump-select').value = data.wellPumpSelect || '1176';
+            document.getElementById('pool-pump').checked = data.poolPump || false;
+            document.getElementById('pool-pump-select').value = data.poolPumpSelect || '1920';
+            document.getElementById('spa-pump').checked = data.spaPump || false;
+            document.getElementById('spa-pump-select').value = data.spaPumpSelect || '1940';
+            document.getElementById('garage-door').checked = data.garageDoor || false;
+            document.getElementById('garage-door-select').value = data.garageDoorSelect || '864';
+            // Step 5
+            document.getElementById('dryer').checked = data.dryer || false;
+            // Step 6
+            document.getElementById('cooking-range').checked = data.cookingRange || false;
+            document.getElementById('cooking-range-value').value = data.cookingRangeValue || '8000';
+            document.getElementById('counter-top-range').checked = data.counterTopRange || false;
+            document.getElementById('counter-top-range-value').value = data.counterTopRangeValue || '8000';
+            document.getElementById('wall-oven-range').checked = data.wallOvenRange || false;
+            document.getElementById('wall-oven-value').value = data.wallOvenValue || '4000';
+            document.getElementById('wall-oven-2-range').checked = data.wallOven2Range || false;
+            document.getElementById('wall-oven-2-value').value = data.wallOven2Value || '4000';
+            // Step 7
+            document.getElementById('ev-charger-1').checked = data.evCharger1 || false;
+            document.getElementById('ev-charger-1-value').value = data.evCharger1Value || '7600';
+            document.getElementById('ev-charger-2').checked = data.evCharger2 || false;
+            document.getElementById('ev-charger-2-value').value = data.evCharger2Value || '7600';
+            // A/C rows
+            if (data.acRows && Array.isArray(data.acRows)) {
+                data.acRows.forEach(item => {
+                    const checkbox = document.querySelector(`.ac-row .ac-check[data-tons="${item.tons}"]`);
+                    if (checkbox) {
+                        checkbox.checked = item.checked || false;
+                        const qtySelect = checkbox.closest('.ac-row').querySelector('.ac-qty');
+                        if (qtySelect) {
+                            qtySelect.value = item.qty || '1';
+                        }
+                    }
+                });
+            }
+        } catch(e) {
+            console.warn('Failed to load saved data', e);
+        }
+    }
+
+    function clearState() {
+        localStorage.removeItem('lumaCalculatorData');
+    }
+
+    /* ===========================
+       NEUTRAL LOAD – NEC 220.61
+    ============================ */
+    function calculateNeutralLoad() {
+        const lighting = calculateLightingLoad();
+        const smallApp = calculateSmallApplianceLoad();
+        const laundry = calculateLaundryLoad();
+        const fixed120V = get120VFixedLoad();
+
+        const total120V = lighting + smallApp + laundry + fixed120V;
+        const first3000 = Math.min(total120V, 3000);
+        const remainder120 = total120V > 3000 ? (total120V - 3000) * 0.35 : 0;
+        let neutralBase = first3000 + remainder120;
+
+        const dryerLoad = calculateClothesDryerLoad();
+        const cookingLoad = calculateCookingLoad();
+        neutralBase += 0.7 * (dryerLoad + cookingLoad);
+
+        document.getElementById("neutral-load").innerText = `${neutralBase.toFixed(0)} VA`;
+        return neutralBase;
+    }
+
+    /* ===========================
+       SERVICE RECOMMENDATIONS
+    ============================ */
+    function recommendBreakerAndWire(finalLoad) {
+        const MAX_SERVICE_VA = 400 * 240;
+        let breaker, warning = '';
+        let copperService, aluminumService, copperGround, aluminumGround;
+
+        if (finalLoad > MAX_SERVICE_VA) {
+            breaker = 400;
+            warning = '⚠️ IMPORTANT: Load exceeds 400A (96 kVA) standard residential service capacity. This installation MUST utilize a PRIMARY HIGH VOLTAGE SERVICE with a dedicated utility transformer and commercial metering. A licensed electrical engineer must design the primary service feed. Standard wire sizes below do NOT apply to the primary side.';
+            copperService = 'See Utility / Engineer Specs';
+            aluminumService = 'See Utility / Engineer Specs';
+            copperGround = 'See Utility / Engineer Specs';
+            aluminumGround = 'See Utility / Engineer Specs';
+        } else {
+            const breakerSizes = [100, 125, 150, 200, 300, 400];
+            breaker = breakerSizes.find(size => finalLoad <= size * 240) || 400;
+            warning = '';
+
+            const wireSizes = {
+                copper: { 100: "#4", 125: "#2", 150: "#1", 200: "#1/0", 300: "#4/0", 400: "#250" },
+                aluminum: { 100: "#2", 125: "#1/0", 150: "#2/0", 200: "#3/0", 300: "#4/0", 400: "#250" }
+            };
+            const groundSizes = {
+                copper: { 100: "#8", 125: "#6", 150: "#6", 200: "#4", 300: "#3", 400: "#2" },
+                aluminum: { 100: "#6", 125: "#4", 150: "#4", 200: "#2", 300: "#1", 400: "#1/0" }
+            };
+
+            copperService = wireSizes.copper[breaker];
+            aluminumService = wireSizes.aluminum[breaker];
+            copperGround = groundSizes.copper[breaker];
+            aluminumGround = groundSizes.aluminum[breaker];
+        }
+
+        document.getElementById("breaker-size").innerText = `${breaker} A`;
+        document.getElementById("copper-service").innerText = copperService;
+        document.getElementById("aluminum-service").innerText = aluminumService;
+        document.getElementById("copper-ground").innerText = copperGround;
+        document.getElementById("aluminum-ground").innerText = aluminumGround;
+        document.getElementById("summary-final-step13").innerText = `${finalLoad.toFixed(0)} VA`;
+
+        const warningEl = document.getElementById("service-warning");
+        warningEl.textContent = warning || '';
+        if (warning) {
+            warningEl.style.color = "#ff6666";
+            warningEl.style.fontSize = "18px";
+            warningEl.style.backgroundColor = "#3a1a1a";
+            warningEl.style.padding = "12px";
+            warningEl.style.borderRadius = "6px";
+            warningEl.style.border = "2px solid #ff4444";
+            warningEl.style.marginTop = "10px";
+        } else {
+            warningEl.style.color = "";
+            warningEl.style.backgroundColor = "transparent";
+            warningEl.style.border = "none";
+            warningEl.style.padding = "0";
+            warningEl.style.marginTop = "0";
+        }
+
+        const sqft = document.getElementById("sq-ft").value;
+        document.getElementById("square-footage-step13").innerText = sqft ? `${sqft} SqFt` : "0 SqFt";
+    }
+
+    /* ===========================
+       PDF EXPORT
+    ============================ */
+    function generatePDF() {
+        if (typeof window.jspdf === 'undefined') {
+            alert('PDF library is still loading. Please wait a moment and try again.');
+            return;
+        }
+        const btn = document.querySelector('button[onclick="generatePDF()"]');
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ format: 'letter', unit: 'in' });
+            
+            const currentDate = new Date();
+            const formattedDate = currentDate.toLocaleDateString();
+            const formattedTime = currentDate.toLocaleTimeString();
+            const title = "Electrical Dwelling Load Calculation Report (LUMA)";
+            const subtitle = "(Based on NEC Optional Method – A/C Only)";
+            const copyright = "© 2025 Marcos Duprey. All Rights Reserved.";
+            const generatedOn = `Generated on: ${formattedDate} at ${formattedTime}`;
+            
+            const data = {
+                sqft: document.getElementById("sq-ft").value || "N/A",
+                lightingLoad: document.getElementById("lighting-load").innerText || "N/A",
+                receptacleCircuits: document.getElementById("receptacle-circuits").innerText || "N/A",
+                smallAppliancesLoad: document.getElementById("small-appliances-load").innerText || "N/A",
+                laundryLoad: document.getElementById("laundry-load").innerText || "N/A",
+                fixedAppliancesLoad: document.getElementById("fixed-appliances-load").innerText || "N/A",
+                dryerLoad: document.getElementById("dryer-load").innerText || "N/A",
+                cookingLoad: document.getElementById("total-cooking-load").innerText || "N/A",
+                evLoad: document.getElementById("ev-charger-load").innerText || "N/A",
+                acLoad: document.getElementById("ac-total").innerText || "N/A",
+                optionalLoad: document.getElementById("optional-total").innerText || "N/A",
+                finalLoad: document.getElementById("summary-final").innerText || "N/A",
+                neutralLoad: document.getElementById("neutral-load").innerText || "N/A",
+                breakerSize: document.getElementById("breaker-size").innerText || "N/A",
+                copperService: document.getElementById("copper-service").innerText || "N/A",
+                aluminumService: document.getElementById("aluminum-service").innerText || "N/A",
+                copperGround: document.getElementById("copper-ground").innerText || "N/A",
+                aluminumGround: document.getElementById("aluminum-ground").innerText || "N/A",
+            };
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text(title, 0.5, 1);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            doc.text(subtitle, 0.5, 1.3);
+            doc.setFontSize(10);
+            doc.text(generatedOn, 0.5, 1.6);
+            let yPos = 2;
+            
+            const sectionHeader = (header, y) => {
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.text(header, 0.5, y);
+                doc.setFont("helvetica", "normal");
+            };
+            const addDetail = (label, value, y) => {
+                doc.text(`${label}: ${value}`, 0.7, y);
+            };
+            
+            sectionHeader("Step 1: General Lighting and Receptacles", yPos);
+            addDetail("Square Footage", data.sqft, yPos+=0.2);
+            addDetail("Lighting Load", data.lightingLoad, yPos+=0.2);
+            addDetail("Receptacle Circuits", data.receptacleCircuits, yPos+=0.2);
+            sectionHeader("Step 2: Small Appliances", yPos+=0.4);
+            addDetail("Small Appliances Load", data.smallAppliancesLoad, yPos+=0.2);
+            sectionHeader("Step 3: Laundry", yPos+=0.4);
+            addDetail("Laundry Load", data.laundryLoad, yPos+=0.2);
+            sectionHeader("Step 4: Fixed Appliances", yPos+=0.4);
+            addDetail("Fixed Appliances Load", data.fixedAppliancesLoad, yPos+=0.2);
+            sectionHeader("Step 5: Clothes Dryer", yPos+=0.4);
+            addDetail("Clothes Dryer Load", data.dryerLoad, yPos+=0.2);
+            sectionHeader("Step 6: Cooking Equipment", yPos+=0.4);
+            addDetail("Cooking Load", data.cookingLoad, yPos+=0.2);
+            sectionHeader("Step 7: EV Chargers", yPos+=0.4);
+            addDetail("EV Load", data.evLoad, yPos+=0.2);
+            sectionHeader("Step 8: Summary of All Totals", yPos+=0.4);
+            addDetail("Summary Load (without A/C)", data.optionalLoad, yPos+=0.2);
+            sectionHeader("Step 9: Optional Method Calculation", yPos+=0.4);
+            addDetail("Optional Load (without A/C)", data.optionalLoad, yPos+=0.2);
+            sectionHeader("Step 10: A/C Load", yPos+=0.4);
+            addDetail("A/C Load (Mini Splits)", data.acLoad, yPos+=0.2);
+            sectionHeader("Step 11: Final Load", yPos+=0.4);
+            addDetail("Final Load", data.finalLoad, yPos+=0.2);
+            sectionHeader("Step 12: Neutral Load", yPos+=0.4);
+            addDetail("Neutral Load", data.neutralLoad, yPos+=0.2);
+            sectionHeader("Step 13: Service Recommendations", yPos+=0.4);
+            addDetail("Breaker Size", data.breakerSize, yPos+=0.2);
+            addDetail("Copper Service Wire", data.copperService, yPos+=0.2);
+            addDetail("Copper Ground Wire", data.copperGround, yPos+=0.2);
+            addDetail("Aluminum Service Wire", data.aluminumService, yPos+=0.2);
+            addDetail("Aluminum Ground Wire", data.aluminumGround, yPos+=0.2);
+            
+            yPos+=0.5;
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(8);
+            doc.text(copyright, 0.5, yPos);
+            doc.save("LUMA_Electrical_Load_Report.pdf");
+        } catch (e) {
+            alert('PDF generation failed: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Generate PDF Report';
+        }
+    }
+
+    /* ===========================
+       EXPORT TO EXCEL
+    ============================ */
+    function exportToExcel() {
+        if (typeof XLSX === 'undefined') {
+            alert('Excel library is still loading. Please wait a moment and try again.');
+            return;
+        }
+        const btn = document.querySelector('button[onclick="exportToExcel()"]');
+        btn.disabled = true;
+        btn.textContent = 'Exporting...';
+
+        try {
+            const rows = [
+                ['Category', 'Value']
+            ];
+            document.querySelectorAll("#step8 .input-row").forEach(row => {
+                const label = row.querySelector("p")?.innerText || '';
+                const value = row.querySelector("span")?.innerText || '';
+                rows.push([label.trim(), value.trim()]);
+            });
+            rows.push(['Final Service Load', document.getElementById("summary-final").innerText]);
+            rows.push(['Neutral Load', document.getElementById("neutral-load").innerText]);
+            rows.push(['Breaker Size', document.getElementById("breaker-size").innerText]);
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, 'Load Calc');
+            XLSX.writeFile(wb, 'LUMA_Load_Calculation.xlsx');
+        } catch (e) {
+            alert('Excel export failed: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Export to Excel';
+        }
+    }
+
+    /* ===========================
+       RESET FUNCTIONS
+    ============================ */
+    function resetStep1() {
+        document.getElementById("sq-ft").value = "";
+        document.getElementById("lighting-load").innerText = "0 VA";
+        document.getElementById("receptacle-circuits").innerText = "0";
+        calculateFinalLoad();
+    }
+    function resetStep2() {
+        document.getElementById("small-appliances").selectedIndex = 0;
+        document.getElementById("small-appliances-load").innerText = "0 VA";
+        calculateFinalLoad();
+    }
+    function resetStep3() {
+        document.getElementById("laundry").selectedIndex = 0;
+        document.getElementById("laundry-load").innerText = "0 VA";
+        calculateFinalLoad();
+    }
+    function resetStep4() {
+        document.querySelectorAll("#step4 input[type='checkbox']").forEach(checkbox => checkbox.checked = false);
+        document.querySelectorAll("#step4 select").forEach(select => select.value = select.options[0].value);
+        document.querySelectorAll("#step4 span[id$='-load']").forEach(span => span.innerText = "0 VA");
+        document.getElementById("fixed-appliances-load").innerText = "0 VA";
+        calculateFinalLoad();
+    }
+    function resetStep5() {
+        document.getElementById("dryer").checked = false;
+        document.getElementById("dryer-load").innerText = "0 VA";
+        calculateFinalLoad();
+    }
+    function resetStep6() {
+        document.querySelectorAll("#step6 input[type='checkbox']").forEach(input => input.checked = false);
+        document.querySelectorAll("#step6 select").forEach(select => select.selectedIndex = 0);
+        ["cooking-range-result","counter-top-range-result","wall-oven-result","wall-oven-2-result","total-cooking-load"].forEach(id => {
+            document.getElementById(id).innerText = "0 VA";
+        });
+        calculateFinalLoad();
+    }
+    function resetStep7() {
+        document.querySelectorAll("#step7 input[type='checkbox']").forEach(input => input.checked = false);
+        document.querySelectorAll("#step7 select").forEach(select => select.selectedIndex = 0);
+        ["ev-charger-1-result","ev-charger-2-result","ev-charger-load"].forEach(id => {
+            document.getElementById(id).innerText = "0 VA";
+        });
+        calculateFinalLoad();
+    }
+    function resetStep8() {
+        ["summary-general-lighting","summary-small-appliances","summary-laundry",
+         "summary-fixed-appliances","summary-clothes-dryer","summary-cooking-equipment",
+         "summary-ev-charger","summary-optional-method","summary-final"].forEach(id => {
+            document.getElementById(id).innerText = "0 VA";
+        });
+        calculateFinalLoad();
+    }
+    function resetStep9() {
+        document.getElementById("first-10000").innerText = "0 VA";
+        document.getElementById("remainder").innerText = "0 VA";
+        document.getElementById("optional-total").innerText = "0 VA";
+        calculateFinalLoad();
+    }
+    function resetStep10() {
+        const checkboxes = document.querySelectorAll('#ac-container .ac-check');
+        checkboxes.forEach(cb => cb.checked = false);
+        const qtySelects = document.querySelectorAll('#ac-container .ac-qty');
+        qtySelects.forEach(sel => sel.value = '1');
+        const vaDisplays = document.querySelectorAll('#ac-container .ac-va-display');
+        vaDisplays.forEach(el => el.textContent = '0 VA');
+        document.getElementById('ac-total').innerText = '0 VA';
+        document.getElementById('ac-load-final').innerText = '0 VA';
+        calculateFinalLoad();
+    }
+    function resetStep11() {
+        document.getElementById("optional-method-final").innerText = "0 VA";
+        document.getElementById("ac-load-final").innerText = "0 VA";
+        document.getElementById("summary-final").innerText = "0 VA";
+        calculateFinalLoad();
+    }
+    function resetStep12() {
+        document.getElementById("neutral-load").innerText = "0 VA";
+        calculateFinalLoad();
+    }
+    function resetStep13() {
+        document.getElementById("breaker-size").innerText = "0 A";
+        document.getElementById("copper-service").innerText = "#0";
+        document.getElementById("aluminum-service").innerText = "#0";
+        document.getElementById("copper-ground").innerText = "#0";
+        document.getElementById("aluminum-ground").innerText = "#0";
+        document.getElementById("square-footage-step13").innerText = "0 SqFt";
+        document.getElementById("service-warning").textContent = "";
+        document.getElementById("service-warning").style = "";
+        calculateFinalLoad();
+    }
+
+    function resetForm() {
+        if (!window.confirm("Are you sure you want to reset all steps? All entered data will be cleared.")) return;
+        resetStep1();
+        resetStep2();
+        resetStep3();
+        resetStep4();
+        resetStep5();
+        resetStep6();
+        resetStep7();
+        resetStep8();
+        resetStep9();
+        resetStep10();
+        resetStep11();
+        resetStep12();
+        resetStep13();
+        // Clear saved data
+        clearState();
+        calculateFinalLoad();
+    }
+
+    // = BACK TO TOP ===== 
+    let backToTopBtn = document.getElementById("backToTopBtn");
+    window.onscroll = function() {scrollFunction()};
+    function scrollFunction() {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            backToTopBtn.classList.add("show");
+        } else {
+            backToTopBtn.classList.remove("show");
+        }
+    }
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+    </script>
+</body>
+</html>
